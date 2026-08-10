@@ -1,0 +1,5 @@
+.DS_Store
+
+# Dev scratch — recording takes made with record.sh, not part of the app
+audio_test/
+scratch_voice_samples/

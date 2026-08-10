@@ -1,0 +1,26 @@
+<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="400" fill="#ffe3b3"/>
+  <ellipse cx="200" cy="330" rx="150" ry="30" fill="#f7c977" opacity="0.6"/>
+  <!-- tail -->
+  <path d="M 340 250 Q 375 240 370 210 Q 345 220 320 240 Z" fill="#f2994a"/>
+  <!-- body -->
+  <ellipse cx="220" cy="245" rx="100" ry="75" fill="#f5a84f"/>
+  <!-- legs -->
+  <rect x="175" y="290" width="28" height="58" rx="12" fill="#f2994a"/>
+  <rect x="245" y="290" width="28" height="58" rx="12" fill="#f2994a"/>
+  <ellipse cx="189" cy="350" rx="24" ry="11" fill="#c97b34"/>
+  <ellipse cx="259" cy="350" rx="24" ry="11" fill="#c97b34"/>
+  <!-- frill -->
+  <path d="M 95 210 Q 70 150 130 120 Q 120 165 140 195 Z" fill="#f2994a"/>
+  <!-- head -->
+  <ellipse cx="130" cy="210" rx="60" ry="48" fill="#f5a84f"/>
+  <!-- horns -->
+  <path d="M 100 168 L 92 130 L 112 172 Z" fill="#fff6e6"/>
+  <path d="M 150 168 L 158 130 L 138 172 Z" fill="#fff6e6"/>
+  <path d="M 90 205 L 65 210 L 92 218 Z" fill="#fff6e6"/>
+  <!-- eye -->
+  <circle cx="120" cy="195" r="13" fill="white"/>
+  <circle cx="123" cy="197" r="6.5" fill="#2b2b2b"/>
+  <!-- smile -->
+  <path d="M 95 222 Q 110 232 128 224" stroke="#2b2b2b" stroke-width="4" fill="none" stroke-linecap="round"/>
+</svg>
