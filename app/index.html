@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Felix's Phonics</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- HOME -->
+<section id="screen-home" class="screen active">
+  <h1>🦕 Felix's Phonics</h1>
+  <p class="subtitle">Tap a game to start!</p>
+  <div class="home-buttons">
+    <button class="game-tile" data-game="football">
+      <span class="tile-emoji">⚽</span>
+      <span>Football<br>Sounds</span>
+    </button>
+    <button class="game-tile" data-game="puzzle">
+      <span class="tile-emoji">🧩</span>
+      <span>Dinosaur<br>Puzzle</span>
+    </button>
+  </div>
+</section>
+
+<!-- FOOTBALL SOUNDS -->
+<section id="screen-football" class="screen">
+  <button class="back-btn" data-back>←</button>
+  <div class="stage-row" id="football-stages"></div>
+  <div class="progress-dots" id="football-dots"></div>
+
+  <div class="scoreboard">
+    <span class="team-tag tag-eng"><span class="flag">🇬🇧</span> <span id="football-score-england">0</span></span>
+    <span class="vs">–</span>
+    <span class="team-tag tag-arg"><span id="football-score-argentina">0</span> <span class="flag">🇦🇷</span></span>
+  </div>
+
+  <div class="pitch-wrap">
+    <div class="pitch">
+      <div class="pitch-halfway"></div>
+      <div class="pitch-circle"></div>
+
+      <div class="crowd-row top">
+        <span class="crowd-dot" style="background:#ff6b6b"></span>
+        <span class="crowd-dot" style="background:#ffd166"></span>
+        <span class="crowd-dot" style="background:#4287f5"></span>
+        <span class="crowd-dot" style="background:#6bcB77"></span>
+        <span class="crowd-dot" style="background:#ff6b6b"></span>
+      </div>
+      <div class="crowd-row bottom">
+        <span class="crowd-dot" style="background:#4287f5"></span>
+        <span class="crowd-dot" style="background:#ffd166"></span>
+        <span class="crowd-dot" style="background:#ff6b6b"></span>
+        <span class="crowd-dot" style="background:#6bcB77"></span>
+        <span class="crowd-dot" style="background:#ffd166"></span>
+      </div>
+
+      <div class="goal goal-left">
+        <div class="goal-flag">🇦🇷</div>
+        <div class="goal-frame"></div>
+        <div class="goal-net" id="football-net-left"></div>
+        <div class="keeper"></div>
+      </div>
+      <div class="goal goal-right">
+        <div class="goal-flag">🇬🇧</div>
+        <div class="goal-frame"></div>
+        <div class="goal-net" id="football-net-right"></div>
+        <div class="keeper"></div>
+      </div>
+
+      <div class="footballer team-england" id="football-kicker">
+        <svg viewBox="0 0 60 90" class="footballer-svg">
+          <rect class="leg leg-left" x="20" y="55" width="8" height="28" rx="4" fill="#2b2b2b"/>
+          <rect class="leg leg-right" x="32" y="55" width="8" height="28" rx="4" fill="#2b2b2b"/>
+          <rect class="kit" x="16" y="28" width="28" height="32" rx="10"/>
+          <rect class="kit" x="8" y="30" width="9" height="22" rx="4"/>
+          <rect class="kit" x="43" y="30" width="9" height="22" rx="4"/>
+          <rect class="kit-stripe" x="26" y="28" width="8" height="32"/>
+          <circle cx="30" cy="16" r="13" fill="#ffd7ae"/>
+          <circle cx="25" cy="14" r="2" fill="#2b2b2b"/>
+          <circle cx="35" cy="14" r="2" fill="#2b2b2b"/>
+          <path d="M24 21 Q30 25 36 21" stroke="#2b2b2b" stroke-width="2" fill="none" stroke-linecap="round"/>
+        </svg>
+      </div>
+
+      <div id="football-ball">⚽</div>
+      <div id="football-goal-text">GOAL!</div>
+    </div>
+  </div>
+
+  <div class="sound-row">
+    <button class="sound-btn" id="football-play-sound">🔊 Hear it again</button>
+    <button class="name-btn" id="football-play-name">🔤 Letter name</button>
+  </div>
+
+  <div class="letter-choices" id="football-choices"></div>
+</section>
+
+<!-- DINOSAUR PUZZLE -->
+<section id="screen-puzzle" class="screen">
+  <button class="back-btn" data-back>←</button>
+  <div class="stage-row" id="puzzle-stages"></div>
+
+  <div class="puzzle-stage">
+    <img id="puzzle-image" src="" alt="dinosaur picture">
+    <div class="puzzle-grid" id="puzzle-grid"></div>
+  </div>
+
+  <div class="sound-row">
+    <button class="sound-btn" id="puzzle-play-sound">🔊 Hear it again</button>
+    <button class="name-btn" id="puzzle-play-name">🔤 Letter name</button>
+  </div>
+
+  <div class="letter-choices" id="puzzle-choices"></div>
+</section>
+
+<!-- COMPLETE -->
+<section id="screen-complete" class="screen">
+  <div class="complete-card">
+    <div class="complete-emoji">⭐️🎉⭐️</div>
+    <h2 id="complete-title">You did it!</h2>
+    <p id="complete-message"></p>
+    <div class="complete-buttons">
+      <button class="big-btn" id="play-again-btn">Play Again</button>
+      <button class="big-btn secondary" id="home-btn">Home</button>
+    </div>
+  </div>
+</section>
+
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,315 @@
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Trebuchet MS', 'Chalkboard SE', 'Comic Sans MS', sans-serif;
+  background: linear-gradient(160deg, #fef6e4, #e4f6f9);
+  color: #2b2b2b;
+}
+
+.screen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  width: 100vw;
+  padding: 24px;
+  position: relative;
+}
+.screen.active { display: flex; }
+
+h1 { font-size: 42px; margin: 0 0 4px; }
+.subtitle { font-size: 20px; color: #555; margin: 0 0 30px; }
+
+/* Home */
+.home-buttons { display: flex; gap: 28px; flex-wrap: wrap; justify-content: center; }
+.game-tile {
+  width: 200px; height: 220px;
+  border: none; border-radius: 28px;
+  background: white;
+  box-shadow: 0 8px 0 rgba(0,0,0,0.08), 0 8px 20px rgba(0,0,0,0.08);
+  font-family: inherit;
+  font-size: 22px;
+  font-weight: bold;
+  color: #2b2b2b;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+.game-tile:active { transform: scale(0.94); }
+.tile-emoji { font-size: 64px; }
+
+/* Back button */
+.back-btn {
+  position: absolute; top: 20px; left: 20px;
+  width: 52px; height: 52px; border-radius: 50%;
+  border: none; background: white; font-size: 24px;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.08);
+  cursor: pointer;
+}
+
+/* Progress dots */
+.progress-dots { display: flex; gap: 10px; justify-content: center; margin-bottom: 6px; }
+.progress-dots .dot {
+  width: 16px; height: 16px; border-radius: 50%;
+  background: #ddd;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.progress-dots .dot.done { background: #6bcB77; transform: scale(1.15); }
+
+/* Stage picker (shared by both games) */
+.stage-row { display: flex; gap: 8px; justify-content: center; margin: 44px 0 8px; }
+.stage-btn {
+  width: 38px; height: 38px; border-radius: 50%;
+  border: none; font-family: inherit; font-weight: bold; font-size: 16px;
+  background: #e5ddc8; color: #6b4c2a; cursor: pointer;
+}
+.stage-btn.active { background: #ffd166; color: #2b2b2b; box-shadow: 0 3px 0 rgba(0,0,0,0.12); }
+.stage-btn.locked { background: #f0ede4; color: #c3bca6; cursor: default; font-size: 14px; }
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px); }
+  75% { transform: translateX(10px); }
+}
+
+/* Football Sounds */
+.scoreboard {
+  display: flex; align-items: center; gap: 10px;
+  background: white; padding: 8px 16px; border-radius: 16px;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.08);
+  font-size: 18px; font-weight: bold; margin-bottom: 8px;
+}
+.scoreboard .team-tag { display: flex; align-items: center; gap: 5px; }
+.scoreboard .team-tag .flag { font-size: 17px; }
+.scoreboard .team-tag.tag-eng { color: #1B3A6B; }
+.scoreboard .team-tag.tag-arg { color: #4a9dc9; }
+.scoreboard .vs { color: #bbb; font-weight: 700; }
+
+.pitch-wrap { margin: 4px 0 6px; width: 100%; display: flex; justify-content: center; }
+.pitch {
+  /* Single scale driver - every child below is sized as a fraction of this,
+     so the whole pitch grows/shrinks as one coherent unit rather than the
+     pitch itself resizing while goals/players/ball stay a fixed size.
+     Capped at 420px (was a fixed 320px) so it genuinely gets bigger on
+     anything wider than a phone, but min(94vw, ...) keeps it from
+     overflowing a narrow viewport - the old fixed 320px was actually
+     already edge-to-edge (clipping slightly) on a ~330px-wide phone. */
+  --pitch-w: min(94vw, 420px);
+  position: relative;
+  width: var(--pitch-w);
+  aspect-ratio: 8 / 5;
+  background: linear-gradient(180deg, #5fbf5f, #4caf50);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 0 rgba(0,0,0,0.08);
+  border: 4px solid #fff;
+}
+.pitch::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(90deg, rgba(255,255,255,0.07) 0 30px, transparent 30px 60px);
+}
+.pitch-halfway {
+  position: absolute; left: 50%; top: 0; bottom: 0; width: 3px;
+  background: rgba(255,255,255,0.8); transform: translateX(-50%);
+}
+.pitch-circle {
+  position: absolute; left: 50%; top: 50%;
+  width: calc(var(--pitch-w) * 0.175); height: calc(var(--pitch-w) * 0.175);
+  border: 3px solid rgba(255,255,255,0.8); border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.crowd-row { position: absolute; left: 6px; right: 6px; display: flex; justify-content: space-between; z-index: 1; }
+.crowd-row.top { top: 3px; }
+.crowd-row.bottom { bottom: 3px; }
+.crowd-dot {
+  width: calc(var(--pitch-w) * 0.01875); height: calc(var(--pitch-w) * 0.01875);
+  border-radius: 50%; opacity: 0.55;
+}
+
+.goal {
+  position: absolute; top: 50%;
+  width: calc(var(--pitch-w) * 0.1); height: calc(var(--pitch-w) * 0.16875);
+  transform: translateY(-50%); z-index: 2;
+}
+.goal-left { left: 4px; }
+.goal-right { right: 4px; }
+.goal-frame { position: absolute; inset: 0; border: 4px solid #fff; border-radius: 3px 3px 0 0; }
+.goal-left .goal-frame { border-right: none; }
+.goal-right .goal-frame { border-left: none; }
+.goal-net {
+  position: absolute; inset: 4px 0 0 0;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.55) 0 1px, transparent 1px 7px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.55) 0 1px, transparent 1px 7px);
+}
+.goal-net.wobble { animation: net-wobble 0.45s ease; }
+@keyframes net-wobble {
+  0%, 100% { transform: scaleX(1) skewX(0deg); }
+  25% { transform: scaleX(1.2) skewX(-8deg); }
+  50% { transform: scaleX(0.9) skewX(6deg); }
+  75% { transform: scaleX(1.08) skewX(-3deg); }
+}
+
+/* Team flags above each goal - left goal is defended by Argentina, right by
+   England, matching the kicker's team-swap logic in app.js (England always
+   shoots left, Argentina always shoots right). */
+.goal-flag {
+  position: absolute; top: -20px; font-size: 15px; z-index: 3;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.25));
+}
+.goal-left .goal-flag { left: 50%; transform: translateX(-50%); }
+.goal-right .goal-flag { left: 50%; transform: translateX(-50%); }
+
+.keeper {
+  position: absolute; top: 12px;
+  width: calc(var(--pitch-w) * 0.05); height: calc(var(--pitch-w) * 0.0875);
+}
+.goal-left .keeper { left: 8px; }
+.goal-right .keeper { right: 8px; }
+.keeper::before {
+  content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  width: 10px; height: 10px; border-radius: 50%; background: #ffd7ae;
+}
+.keeper::after {
+  content: ''; position: absolute; top: 9px; left: 2px;
+  width: 12px; height: 18px; border-radius: 4px; background: #f4c542;
+}
+/* Argentina keeper (left goal) - sky blue. England keeper (right goal) - navy. */
+.goal-left .keeper::after { background: #6EC6F0; }
+.goal-right .keeper::after { background: #1B3A6B; }
+
+.footballer {
+  position: absolute; left: 50%; top: 58%; transform: translate(-50%, -50%);
+  width: calc(var(--pitch-w) * 0.14375); height: calc(var(--pitch-w) * 0.2);
+  z-index: 4;
+}
+.footballer-svg { width: 100%; height: 100%; }
+.footballer-svg .leg-right { transform-origin: 36px 55px; transition: transform 0.12s ease; }
+.footballer.kicking .footballer-svg .leg-right { animation: leg-kick 0.35s ease; }
+@keyframes leg-kick {
+  0% { transform: rotate(0deg); }
+  45% { transform: rotate(-45deg); }
+  100% { transform: rotate(0deg); }
+}
+/* Team kit - England navy, Argentina sky-blue with a white centre stripe
+   (the stripe rect is always in the SVG; it just matches the shirt colour,
+   i.e. is invisible, for England). Toggled in app.js before each kick so
+   the runner-up shows whichever team is about to score. */
+.footballer.team-england .footballer-svg .kit { fill: #1B3A6B; }
+.footballer.team-england .footballer-svg .kit-stripe { fill: #1B3A6B; }
+.footballer.team-argentina .footballer-svg .kit { fill: #6EC6F0; }
+.footballer.team-argentina .footballer-svg .kit-stripe { fill: #FFFFFF; }
+
+#football-ball {
+  position: absolute; left: 50%; top: 62%; transform: translate(-50%, -50%);
+  font-size: calc(var(--pitch-w) * 0.075); z-index: 5;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));
+}
+@keyframes ball-fly-right {
+  0% { left: 50%; top: 62%; }
+  55% { left: 74%; top: 36%; }
+  100% { left: 90%; top: 46%; }
+}
+@keyframes ball-fly-left {
+  0% { left: 50%; top: 62%; }
+  55% { left: 26%; top: 36%; }
+  100% { left: 10%; top: 46%; }
+}
+#football-ball.fly-right { animation: ball-fly-right 0.5s ease-in forwards; }
+#football-ball.fly-left { animation: ball-fly-left 0.5s ease-in forwards; }
+
+#football-goal-text {
+  position: absolute; top: 36%; left: 50%; transform: translate(-50%, -50%) scale(0.5);
+  font-family: inherit; font-size: max(20px, calc(var(--pitch-w) * 0.1)); font-weight: 900; color: #fff;
+  text-shadow: 2px 2px 0 #ff6b6b, -1px -1px 0 #2b2b2b;
+  opacity: 0; pointer-events: none; z-index: 10;
+  transition: opacity 0.25s ease, transform 0.25s cubic-bezier(.34,1.56,.64,1);
+  white-space: nowrap;
+}
+#football-goal-text.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+/* Sound + letter-name buttons */
+.sound-row { display: flex; gap: 12px; margin: 18px 0 24px; }
+.sound-btn {
+  font-family: inherit; font-size: 20px; font-weight: bold;
+  background: white; border: none; border-radius: 20px;
+  padding: 14px 26px;
+  box-shadow: 0 5px 0 rgba(0,0,0,0.08);
+  cursor: pointer; color: #2b2b2b;
+}
+.sound-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,0.08); }
+.name-btn {
+  font-family: inherit; font-size: 16px; font-weight: bold;
+  background: #eef2ff; border: none; border-radius: 20px;
+  padding: 14px 20px;
+  box-shadow: 0 5px 0 rgba(0,0,0,0.06);
+  cursor: pointer; color: #4338ca;
+}
+.name-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,0.06); }
+.name-btn:disabled { opacity: 0.4; cursor: default; box-shadow: none; }
+
+/* Letter choices */
+.letter-choices { display: flex; gap: 20px; }
+.letter-btn {
+  width: 100px; height: 100px;
+  font-size: 52px; font-weight: bold;
+  font-family: inherit;
+  border: none; border-radius: 24px;
+  background: #ffd166;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.1);
+  cursor: pointer;
+  color: #2b2b2b;
+  transition: transform 0.1s ease;
+}
+.letter-btn:active { transform: scale(0.92); }
+.letter-btn.wide-letter { font-size: 38px; }
+.letter-btn.correct-flash { background: #6bcB77; }
+.letter-btn.wrong-flash { background: #ff8787; animation: shake 0.4s ease; }
+
+/* Puzzle */
+.puzzle-stage {
+  position: relative;
+  width: 320px; height: 320px;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 8px 0 rgba(0,0,0,0.08);
+  margin-top: 10px;
+}
+.puzzle-stage img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.puzzle-grid {
+  position: absolute; inset: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 3px;
+}
+.puzzle-tile {
+  background: #b8b8f5;
+  border: 3px solid #fef6e4;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 30px;
+  transition: transform 0.4s ease, opacity 0.4s ease;
+}
+.puzzle-tile.revealed { transform: scale(0.001); opacity: 0; pointer-events: none; }
+
+/* Complete */
+.complete-card {
+  background: white; border-radius: 30px; padding: 40px 50px;
+  text-align: center; box-shadow: 0 10px 0 rgba(0,0,0,0.08);
+}
+.complete-emoji { font-size: 48px; margin-bottom: 10px; }
+.complete-buttons { display: flex; gap: 16px; justify-content: center; margin-top: 20px; }
+.big-btn {
+  font-family: inherit; font-size: 20px; font-weight: bold;
+  padding: 16px 28px; border: none; border-radius: 20px;
+  background: #6bcB77; color: white; cursor: pointer;
+  box-shadow: 0 5px 0 rgba(0,0,0,0.1);
+}
+.big-btn.secondary { background: #ffd166; color: #2b2b2b; }
+.big-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,0.1); }
