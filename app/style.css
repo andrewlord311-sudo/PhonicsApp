@@ -526,3 +526,51 @@ h1 { font-size: 42px; margin: 0 0 4px; }
   .letter-btn.small-letter.wide-letter { font-size: 22px; }
   .cts-picture { font-size: 46px; height: 54px; }
 }
+
+/* ---- Which sound? ---- */
+.ws-hint {
+  font-size: 20px; color: #6b6b6b; text-align: center; margin: 2px 0 10px;
+}
+/* The letter is a button: tapping it gives the letter NAME, the same second
+   cue the matching games offer for sounds that are hard to tell apart. */
+.ws-letter {
+  font-family: inherit;
+  font-size: 120px; font-weight: bold; line-height: 1;
+  color: #2b2b2b;
+  background: white; border: none; border-radius: 28px;
+  padding: 10px 42px 22px;
+  box-shadow: 0 8px 0 rgba(0,0,0,0.08), 0 8px 20px rgba(0,0,0,0.06);
+  cursor: pointer; margin-bottom: 18px;
+  transition: transform 0.1s ease;
+}
+.ws-letter:active { transform: scale(0.96); }
+
+.sound-cards {
+  display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;
+}
+/* Numbered so a child can say "the second one" out loud, and so the
+   light-up-in-order playback has something to point at. */
+.sound-card {
+  width: 112px; height: 112px;
+  border: none; border-radius: 24px;
+  background: #ffd166;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.1);
+  font-family: inherit;
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 2px;
+  cursor: pointer;
+  transition: transform 0.1s ease, background 0.2s ease;
+}
+.sound-card:active { transform: scale(0.93); }
+.sound-card-num { font-size: 20px; font-weight: bold; color: #8a6d1f; }
+.sound-card-icon { font-size: 44px; line-height: 1; }
+/* Lit while this card is the one speaking during the intro sequence. */
+.sound-card.speaking { background: #ffe9a8; transform: scale(1.06); }
+.sound-card.correct-flash { background: #6bcB77; }
+.sound-card.wrong-flash { background: #ff8787; animation: shake 0.4s ease; }
+
+@media (max-width: 480px) {
+  .ws-letter { font-size: 88px; padding: 8px 30px 16px; }
+  .sound-card { width: 88px; height: 88px; }
+  .sound-card-icon { font-size: 34px; }
+}

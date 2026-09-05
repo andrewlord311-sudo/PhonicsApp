@@ -266,6 +266,7 @@ document.querySelectorAll('.game-tile').forEach(btn => {
     if (game === 'soundbuttons') startSoundButtons();
     if (game === 'robot') startRobotTalk();
     if (game === 'catch') startCatchSounds();
+    if (game === 'which') startWhichSound();
   });
 });
 
@@ -280,6 +281,7 @@ document.getElementById('play-again-btn').addEventListener('click', () => {
   if (lastCompletedGame === 'football') startFootballGame();
   else if (lastCompletedGame === 'robot') startRobotTalk();
   else if (lastCompletedGame === 'catch') startCatchSounds();
+  else if (lastCompletedGame === 'which') startWhichSound();
   else startPuzzleGame();
 });
 
@@ -934,6 +936,120 @@ function sayCatchWord() {
 
 document.getElementById('cts-say').addEventListener('click', sayCatchWord);
 
+// ---- Which sound? ----
+// Grapheme -> phoneme: the reverse of the two matching games. Show <m>, play
+// three sounds, tap the one it says.
+//
+// The interaction problem is that the ANSWERS are sounds - there is nothing
+// to look at and compare. So: the three sounds play in order first, each card
+// lighting as it speaks, and then tapping a card BOTH plays its sound and
+// answers with it. One tap, no "listen mode" versus "answer mode" to
+// understand, and a wrong tap still plays what that card says - so picking
+// the wrong one teaches something instead of just buzzing.
+//
+// It DOES unlock stages, unlike the word games. Same reason the matching
+// games do: it draws its target from the whole cumulative pool, so clearing
+// it says something about the newest week's graphemes specifically.
+let wsRound = 0;
+let wsTarget = null;         // the grapheme shown
+let wsOptions = [];          // phonemes, in card order
+let wsBusy = false;
+
+function startWhichSound() {
+  selectedStage = stageProgress.current;
+  wsRound = 0;
+  renderStageRow('ws-stages', selectWhichStage);
+  renderProgressDots('ws-dots');
+  showScreen('screen-which');
+  nextWhichRound();
+}
+
+function selectWhichStage(stageId) {
+  selectedStage = stageId;
+  wsRound = 0;
+  renderStageRow('ws-stages', selectWhichStage);
+  renderProgressDots('ws-dots');
+  nextWhichRound();
+}
+
+function nextWhichRound() {
+  if (wsRound >= ROUNDS_PER_SESSION) {
+    finishSession('which');
+    return;
+  }
+  const pool = stagePool(selectedStage);
+  wsTarget = pool[Math.floor(Math.random() * pool.length)];
+  const targetPhoneme = PHONEME_OF(wsTarget);
+
+  // Distractors are other SOUNDS. Nothing is displayed for them, so unlike
+  // the matching games there is no risk of two options looking alike - only
+  // of them sounding alike, which distinct phonemes rules out by definition.
+  const others = [...new Set(pool.map(PHONEME_OF))]
+    .filter(p => p !== targetPhoneme);
+  wsOptions = shuffle([targetPhoneme, ...shuffle(others).slice(0, 2)]);
+
+  document.getElementById('ws-letter').textContent = wsTarget;
+  const wrap = document.getElementById('ws-choices');
+  wrap.innerHTML = '';
+  wsOptions.forEach((phoneme, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'sound-card';
+    btn.innerHTML = `<span class="sound-card-num">${i + 1}</span>`
+      + '<span class="sound-card-icon">🔊</span>';
+    btn.addEventListener('click', () => handleWhichAnswer(phoneme, btn));
+    wrap.appendChild(btn);
+  });
+
+  setTimeout(playWhichSequence, 500);
+}
+
+// Play all three in order, lighting each card as it speaks, so a child who
+// can't yet hold three sounds in their head can watch which is which.
+function playWhichSequence() {
+  if (wsBusy || !wsOptions.length) return;
+  wsBusy = true;
+  const cards = [...document.querySelectorAll('#ws-choices .sound-card')];
+  const step = (i) => {
+    if (i >= wsOptions.length) { wsBusy = false; return; }
+    const card = cards[i];
+    card.classList.add('speaking');
+    const audio = new Audio(`audio/${CURRICULUM.phonemes[wsOptions[i]].sound}.wav`);
+    audio.addEventListener('ended', () => {
+      card.classList.remove('speaking');
+      setTimeout(() => step(i + 1), 420);
+    });
+    audio.play().catch(() => { card.classList.remove('speaking'); wsBusy = false; });
+  };
+  step(0);
+}
+
+function handleWhichAnswer(phoneme, btn) {
+  if (wsBusy) return;
+  // Play what they picked either way - a wrong choice should let them hear
+  // that it isn't the sound, not just be told off.
+  const audio = new Audio(`audio/${CURRICULUM.phonemes[phoneme].sound}.wav`);
+  audio.play().catch(() => {});
+
+  if (phoneme === PHONEME_OF(wsTarget)) {
+    btn.classList.add('correct-flash');
+    setTimeout(playSuccessChime, 350);
+    document.querySelectorAll('#ws-dots .dot')[wsRound].classList.add('done');
+    wsRound++;
+    setTimeout(nextWhichRound, 1500);
+  } else {
+    btn.classList.add('wrong-flash');
+    setTimeout(() => btn.classList.remove('wrong-flash'), 400);
+  }
+}
+
+document.getElementById('ws-replay').addEventListener('click', playWhichSequence);
+document.getElementById('ws-letter').addEventListener('click', () => {
+  // Tapping the letter itself gives its NAME, when it has one - the same
+  // second cue the matching games offer, for sounds that are hard to
+  // distinguish by ear.
+  if (wsTarget) playLetterName(wsTarget);
+});
+
 // ---- Completion ----
 function finishSession(game) {
   lastCompletedGame = game;
@@ -951,6 +1067,9 @@ function finishSession(game) {
   } else if (game === 'catch') {
     title.textContent = '🎣 You caught every sound!';
     message.textContent = 'You built each word from the sounds you heard!';
+  } else if (game === 'which') {
+    title.textContent = '👂 Great listening!';
+    message.textContent = 'You knew what every letter says!';
   } else if (game === 'football') {
     const { england, argentina } = footballScore;
     title.textContent = `Full Time! England ${england} – ${argentina} Argentina`;
