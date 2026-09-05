@@ -1,41 +1,44 @@
 // ---- Data ----
-// Full lowercase alphabet, in Letters and Sounds teaching order (Phase 2 then Phase 3 singles).
-const ALPHABET = [
-  { id: 's', phase: 2 }, { id: 'a', phase: 2 }, { id: 't', phase: 2 }, { id: 'p', phase: 2 },
-  { id: 'i', phase: 2 }, { id: 'n', phase: 2 }, { id: 'm', phase: 2 }, { id: 'd', phase: 2 },
-  { id: 'g', phase: 2 }, { id: 'o', phase: 2 }, { id: 'c', phase: 2 }, { id: 'k', phase: 2 },
-  { id: 'e', phase: 2 }, { id: 'u', phase: 2 }, { id: 'r', phase: 2 },
-  { id: 'h', phase: 2 }, { id: 'b', phase: 2 }, { id: 'f', phase: 2 }, { id: 'l', phase: 2 },
-  { id: 'j', phase: 3 }, { id: 'v', phase: 3 }, { id: 'w', phase: 3 }, { id: 'x', phase: 3 },
-  { id: 'y', phase: 3 }, { id: 'z', phase: 3 }, { id: 'qu', phase: 3 },
-];
-const AUDIO_PATH = (letter) => {
-  const entry = ALPHABET.find(l => l.id === letter);
-  return `audio/phase${entry.phase}/${letter}.wav`;
-};
-// The letter's NAME ("ess", "aitch") read as a separate clip from its pure
-// SOUND ("sss") - helps tell apart sounds that are hard to hear on their
-// own (f vs h, for instance).
-const AUDIO_NAME_PATH = (letter) => {
-  const entry = ALPHABET.find(l => l.id === letter);
-  return `audio/phase${entry.phase}/${letter}_name.wav`;
-};
+// Everything about WHAT is taught now lives in curriculum.js, keyed on the
+// phoneme, so that one sound can have several spellings (/k/ is <c>, <k> and
+// <ck> from Autumn 1 week 3). This file only knows how to play it.
+if (typeof CURRICULUM === 'undefined') {
+  // Loud, not silent: a missing or mistyped curriculum.js would otherwise
+  // show an empty stage row and an unplayable game with no clue why.
+  document.body.innerHTML =
+    '<p style="padding:2rem;font:1rem system-ui">Could not load '
+    + '<code>curriculum.js</code>. The app needs it to know what to teach.</p>';
+  throw new Error('curriculum.js not loaded');
+}
 
-// ---- Staged difficulty (confirmed 2026-08-06) ----
-// Five sets, taught in this order for real-word-building reasons (see vault
-// doc). Each stage's pool is CUMULATIVE - every set introduced so far, not
-// just the newest one - so earlier letters keep getting spaced review
-// rather than disappearing once a new set arrives.
-const STAGE_SETS = [
-  ['s', 'a', 't', 'p'],
-  ['i', 'n', 'm', 'd'],
-  ['g', 'o', 'c', 'k'],
-  ['e', 'u', 'r'],
-  ['h', 'b', 'f', 'l'],
-];
-const STAGES = STAGE_SETS.map((_, i) => ({
+// A grapheme's SOUND comes from its phoneme, so <c>, <k> and <ck> all play
+// the same clip - that shared sound is the entire point of the model.
+const AUDIO_PATH = (grapheme) => {
+  const phoneme = CURRICULUM.phonemes[CURRICULUM.graphemes[grapheme].phoneme];
+  return `audio/${phoneme.sound}.wav`;
+};
+// The grapheme's NAME ("ess", "aitch") is a separate clip from its pure
+// SOUND ("sss") - it helps tell apart sounds that are hard to hear on their
+// own (f vs h). Doubles and <ck> have no name clip; null means "no name",
+// and the button is disabled for that round rather than playing nothing.
+const AUDIO_NAME_PATH = (grapheme) => {
+  const name = CURRICULUM.graphemes[grapheme].name;
+  return name ? `audio/${name}_name.wav` : null;
+};
+const PHONEME_OF = (grapheme) => CURRICULUM.graphemes[grapheme].phoneme;
+
+// ---- Stages, derived from the school's weeks ----
+// A stage is one ELS week that actually introduces something: assess-and-
+// review weeks teach no new grapheme, and weeks whose audio hasn't been
+// generated yet are held back by `ready: false`. Each stage's pool stays
+// CUMULATIVE - every grapheme taught so far, not just the newest - so
+// earlier ones keep getting spaced review instead of disappearing.
+const TEACHING_WEEKS = CURRICULUM.weeks.filter(
+  w => w.ready && w.graphemes.length > 0);
+const STAGES = TEACHING_WEEKS.map((week, i) => ({
   id: i + 1,
-  letters: STAGE_SETS.slice(0, i + 1).flat(),
+  label: week.label,
+  letters: TEACHING_WEEKS.slice(0, i + 1).flatMap(w => w.graphemes),
 }));
 const MAX_STAGE = STAGES.length;
 
@@ -49,7 +52,14 @@ const STAGE_STORAGE_KEY = 'felix_stage_progress';
 function loadStageProgress() {
   try {
     const raw = JSON.parse(localStorage.getItem(STAGE_STORAGE_KEY));
-    if (raw && typeof raw.current === 'number') return raw;
+    if (raw && typeof raw.current === 'number') {
+      // Clamp: a stage number saved before a curriculum edit could now point
+      // past the end (a week marked not-ready, say), and stagePool() would
+      // hand back undefined and break every round.
+      raw.current = Math.min(Math.max(raw.current, 1), MAX_STAGE);
+      raw.cleared = (raw.cleared || []).filter(id => id >= 1 && id <= MAX_STAGE);
+      return raw;
+    }
   } catch {}
   return { current: 1, cleared: [] };
 }
@@ -174,12 +184,32 @@ document.getElementById('play-again-btn').addEventListener('click', () => {
 });
 
 // ---- Shared round logic ----
+// Distractors must come from a DIFFERENT phoneme than the target, not merely
+// be a different grapheme. Once /k/ is spelled <c>, <k> and <ck> (Autumn 1
+// week 3), a round offering "c" against "k" and "ck" plays one sound that
+// all three answers legitimately say - unanswerable, and it would look like
+// the child getting it wrong. One option per distinct sound guarantees
+// exactly one right answer.
 function pickRound(letterPool) {
   const target = letterPool[Math.floor(Math.random() * letterPool.length)];
-  const distractors = letterPool.filter(l => l !== target);
-  shuffle(distractors);
-  const options = shuffle([target, ...distractors.slice(0, Math.min(2, distractors.length))]);
-  return { target, options };
+  const targetPhoneme = PHONEME_OF(target);
+
+  // Group the rest by phoneme, then take one randomly-chosen spelling from
+  // each of two different sounds. Choosing among a phoneme's spellings is
+  // deliberate: it's how <ck> and <ss> ever get seen at all.
+  const byPhoneme = new Map();
+  letterPool.forEach(g => {
+    const p = PHONEME_OF(g);
+    if (p === targetPhoneme) return;
+    if (!byPhoneme.has(p)) byPhoneme.set(p, []);
+    byPhoneme.get(p).push(g);
+  });
+
+  const distractors = shuffle([...byPhoneme.values()])
+    .slice(0, 2)
+    .map(spellings => spellings[Math.floor(Math.random() * spellings.length)]);
+
+  return { target, options: shuffle([target, ...distractors]) };
 }
 
 function shuffle(arr) {
@@ -197,12 +227,17 @@ function playLetterSound(letter) {
 }
 
 function playLetterName(letter) {
-  const audio = new Audio(AUDIO_NAME_PATH(letter));
+  const path = AUDIO_NAME_PATH(letter);
+  if (!path) return;
+  const audio = new Audio(path);
   audio.play().catch(() => {});
 }
 
+// <ck>, <ss>, <ff>, <ll> and <zz> have no letter-name clip - "double ell"
+// was never recorded, and there's no single name for them anyway. Grey the
+// button out on those rounds rather than leaving a button that does nothing.
 function updateNameButton(btnId, target) {
-  document.getElementById(btnId).disabled = false;
+  document.getElementById(btnId).disabled = !AUDIO_NAME_PATH(target);
 }
 
 function renderProgressDots(containerId) {
