@@ -11,6 +11,17 @@ no dependencies — open `app/index.html` and it runs.
 |---|---|
 | **Football Sounds** | Hear a letter sound, tap the matching letter, score a goal. Five stages, each unlocked by the one before. |
 | **Dinosaur Puzzle** | Same sound-to-letter matching, revealing a dinosaur picture piece by piece. |
+| **Sound Buttons** | A word on screen split into its graphemes, each tappable to hear its sound, then "Read the word" to hear it blended. |
+
+**Sound Buttons is not a quiz** — there's no right answer to get and no way
+to fail. It's the tool schools actually use: press each sound in turn, then
+say the word. That also means it deliberately **doesn't unlock stages** —
+unlocking should mean "can pick the letter out from its sound", which is what
+the two matching games test and this one doesn't.
+
+It only ever shows **decodable** words. The `hrs` lists are excluded on
+purpose: "the", "of" and "put" are *harder to read and spell* precisely
+because sounding them out gives the wrong word.
 
 Both have a **Letter name** button alongside **Hear it again**, so the sound
 (`sss`) and the name (`ess`) stay separable — that distinction is the whole
@@ -95,8 +106,22 @@ Why `.js` and not `.json`: `fetch` of a local `.json` is blocked over
 no server. A plain script assigning one object keeps that and is edited
 exactly like JSON.
 
+### Splitting a word into graphemes
+
+`segmentWord()` is what Sound Buttons is built on, and it's the reason the
+spine had to be phoneme-first. **"sock" is `s-o-ck` — three sounds, not
+four.** So is `kiss` → `k-i-ss`, `off` → `o-ff`, `bell` → `b-e-ll`. Getting
+this wrong would teach a child to sound out *letters* instead of *graphemes*,
+which is the exact habit synthetic phonics exists to prevent.
+
+It matches longest-first (`igh` is the longest ELS teaches at this stage) and
+only against graphemes the current stage has actually taught, so a word can
+never be split using a spelling the child hasn't met. A word that can't be
+built from taught graphemes returns null and is simply not offered — the
+honest answer for a word that isn't decodable yet.
+
 ```sh
-node test_curriculum.mjs   # 14 checks
+node test_curriculum.mjs   # 20 checks
 ```
 
 The tests read the real shipped `curriculum.js`, so a typo in the data fails

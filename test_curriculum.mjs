@@ -200,5 +200,106 @@ check('every grapheme in a stage can actually come up', () => {
   }
 });
 
+console.log('\nsegmentation - words split by grapheme, not by letter');
+
+// Same as app.js. The tests below are what keep the two honest.
+const MAX_GRAPHEME_LEN = 3;
+function segmentWord(word, pool) {
+  const parts = [];
+  let i = 0;
+  while (i < word.length) {
+    let matched = null;
+    for (let len = Math.min(MAX_GRAPHEME_LEN, word.length - i); len >= 1; len--) {
+      const chunk = word.slice(i, i + len);
+      if (pool.includes(chunk)) { matched = chunk; break; }
+    }
+    if (!matched) return null;
+    parts.push(matched);
+    i += matched.length;
+  }
+  return parts;
+}
+const ALL = Object.keys(CURRICULUM.graphemes);
+
+check('digraphs stay whole - the whole reason this exists', () => {
+  const cases = {
+    sock: 's o ck', kick: 'k i ck', pick: 'p i ck', sick: 's i ck',
+    kiss: 'k i ss', miss: 'm i ss', mess: 'm e ss', less: 'l e ss',
+    bell: 'b e ll', fell: 'f e ll', tell: 't e ll', hill: 'h i ll',
+    doll: 'd o ll', off: 'o ff',
+    cat: 'c a t', sat: 's a t', at: 'a t',
+  };
+  for (const [word, expected] of Object.entries(cases)) {
+    const got = segmentWord(word, ALL);
+    assert(got !== null, `${word} did not segment at all`);
+    assert(got.join(' ') === expected,
+      `${word} -> "${got.join(' ')}", expected "${expected}"`);
+  }
+});
+
+check('every decodable word in every week segments cleanly', () => {
+  // A word in `words` that cannot be sounded out is a curriculum data bug --
+  // this is the guard for the weekly feed. "full" was caught by exactly this
+  // reasoning: its <u> says /oo/, so it belongs with "pull" in hrs.
+  const bad = [];
+  for (const week of CURRICULUM.weeks) {
+    for (const word of week.words) {
+      if (segmentWord(word, ALL) === null) bad.push(`${word} (${week.id})`);
+    }
+  }
+  assert(bad.length === 0, `cannot be built from taught graphemes: ${bad.join(', ')}`);
+});
+
+check('a word only ever splits with graphemes the stage has taught', () => {
+  for (const stage of STAGES) {
+    const pool = stage.letters;
+    const words = TEACHING_WEEKS.slice(0, stage.id).flatMap(w => w.words);
+    for (const word of words) {
+      const parts = segmentWord(word, pool);
+      if (parts === null) continue;   // legitimately not yet decodable
+      for (const p of parts) {
+        assert(pool.includes(p),
+          `stage ${stage.id} split ${word} using <${p}>, not taught yet`);
+      }
+    }
+  }
+});
+
+check('every stage that offers words offers only decodable ones', () => {
+  for (const stage of STAGES) {
+    const pool = stage.letters;
+    const usable = TEACHING_WEEKS.slice(0, stage.id).flatMap(w => w.words)
+      .map(w => ({ w, parts: segmentWord(w, pool) }))
+      .filter(e => e.parts !== null);
+    assert(usable.length > 0, `stage ${stage.id} has no decodable words`);
+    for (const { w, parts } of usable) {
+      assert(parts.join('') === w, `${w} lost letters: ${parts.join('|')}`);
+    }
+  }
+});
+
+check('harder-to-read-and-spell words are kept out of blending', () => {
+  // Sound Buttons must never show these: they are on the list precisely
+  // because sounding them out gives the wrong word.
+  const leaked = [];
+  for (const week of CURRICULUM.weeks) {
+    for (const h of week.hrs) {
+      if (week.words.includes(h)) leaked.push(h);
+    }
+  }
+  assert(leaked.length === 0, `also listed as decodable: ${leaked.join(', ')}`);
+});
+
+check('every decodable word has its whole-word clip', () => {
+  const missing = [];
+  for (const week of CURRICULUM.weeks) {
+    if (!week.ready) continue;
+    for (const w of week.words) {
+      if (!existsSync(join(APP, 'audio', 'words', `${w}.wav`))) missing.push(w);
+    }
+  }
+  assert(missing.length === 0, `no clip for: ${missing.join(', ')}`);
+});
+
 console.log(`\n${passed} checks passed${failures.length ? `, ${failures.length} FAILED` : ''}`);
 process.exit(failures.length ? 1 : 0);
