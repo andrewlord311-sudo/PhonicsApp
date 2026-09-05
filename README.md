@@ -12,6 +12,7 @@ no dependencies — open `app/index.html` and it runs.
 | **Football Sounds** | Hear a letter sound, tap the matching letter, score a goal. Five stages, each unlocked by the one before. |
 | **Dinosaur Puzzle** | Same sound-to-letter matching, revealing a dinosaur picture piece by piece. |
 | **Sound Buttons** | A word on screen split into its graphemes, each tappable to hear its sound, then "Read the word" to hear it blended. |
+| **Robot Talk** | A robot says `c… a… t` in separate sounds; tap the picture of the word. Nothing is written down. |
 
 **Sound Buttons is not a quiz** — there's no right answer to get and no way
 to fail. It's the tool schools actually use: press each sound in turn, then
@@ -22,6 +23,27 @@ the two matching games test and this one doesn't.
 It only ever shows **decodable** words. The `hrs` lists are excluded on
 purpose: "the", "of" and "put" are *harder to read and spell* precisely
 because sounding them out gives the wrong word.
+
+**Robot Talk is oral blending** — the skill that turns knowing letters into
+reading. The robot speaks the sounds one at a time (waiting for each clip to
+finish, so a clipped `/t/` and a long `/sss/` both get the right rhythm), and
+the whole word is only spoken *after* a correct answer, as the reward for
+having blended it. Nothing is ever written on screen; reading it would answer
+the question.
+
+Two consequences of it being *oral*:
+
+- **It reaches forward past the selected stage when it has to.** Blending by
+  ear needs no knowledge of spellings — ELS teaches it from Nursery, before
+  any grapheme — so hearing `/d/ /o/ /g/` at stage 1 is legitimate practice,
+  not jumping ahead. Without this, stage 1 has exactly one picturable word
+  and no playable game, which is where Felix is right now.
+- **It doesn't unlock stages either.** The stages are *grapheme* stages.
+
+Pictures are emoji, in `curriculum.pictures`. Two rules when adding: never
+repeat an emoji (two words sharing a picture makes a round with two identical
+answers — there's a test), and stick to long-established emoji, since newer
+ones like 🪆 and 🪭 render as an empty box on older tablets.
 
 Both have a **Letter name** button alongside **Hear it again**, so the sound
 (`sss`) and the name (`ess`) stay separable — that distinction is the whole
@@ -121,7 +143,7 @@ built from taught graphemes returns null and is simply not offered — the
 honest answer for a word that isn't decodable yet.
 
 ```sh
-node test_curriculum.mjs   # 20 checks
+node test_curriculum.mjs   # 25 checks
 ```
 
 The tests read the real shipped `curriculum.js`, so a typo in the data fails

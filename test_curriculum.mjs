@@ -301,5 +301,62 @@ check('every decodable word has its whole-word clip', () => {
   assert(missing.length === 0, `no clip for: ${missing.join(', ')}`);
 });
 
+console.log('\npictures - Robot Talk');
+
+check('no two words share a picture', () => {
+  // Two words with the same emoji makes a round showing two identical
+  // answers, one of them marked wrong. Unanswerable, and it looks like a
+  // bug to a four-year-old because it is one.
+  const seen = new Map();
+  for (const [word, emoji] of Object.entries(CURRICULUM.pictures)) {
+    assert(!seen.has(emoji),
+      `${seen.get(emoji)} and ${word} both use ${emoji}`);
+    seen.set(emoji, word);
+  }
+});
+
+check('every pictured word is a decodable word school teaches', () => {
+  const taught = new Set(CURRICULUM.weeks.flatMap(w => w.words));
+  const orphans = Object.keys(CURRICULUM.pictures).filter(w => !taught.has(w));
+  assert(orphans.length === 0,
+    `pictured but never taught as decodable: ${orphans.join(', ')}`);
+});
+
+check('every pictured word has whole-word audio', () => {
+  const missing = Object.keys(CURRICULUM.pictures)
+    .filter(w => !existsSync(join(APP, 'audio', 'words', `${w}.wav`)));
+  assert(missing.length === 0, `no clip for: ${missing.join(', ')}`);
+});
+
+check('every stage can fill a round of three pictures', () => {
+  // Robot Talk reaches forward when a stage is too thin, because blending by
+  // ear needs no grapheme knowledge. This checks the reach always succeeds.
+  const withPictures = (id) => {
+    const pool = STAGES[id - 1].letters;
+    return TEACHING_WEEKS.slice(0, id).flatMap(w => w.words)
+      .filter(w => CURRICULUM.pictures[w] && segmentWord(w, pool) !== null);
+  };
+  for (const stage of STAGES) {
+    let words = withPictures(stage.id);
+    for (let id = stage.id + 1; words.length < 3 && id <= STAGES.length; id++) {
+      words = withPictures(id);
+    }
+    assert(words.length >= 3,
+      `stage ${stage.id} cannot reach 3 pictured words even looking ahead`);
+  }
+});
+
+check('stage 1 is the one that needs the forward reach', () => {
+  // Documenting the actual situation rather than assuming: if a future
+  // curriculum edit gives stage 1 three picturable words, this fails and the
+  // comment in app.js explaining why the reach exists should be revisited.
+  const pool = STAGES[0].letters;
+  const own = TEACHING_WEEKS.slice(0, 1).flatMap(w => w.words)
+    .filter(w => CURRICULUM.pictures[w] && segmentWord(w, pool) !== null);
+  assert(own.length < 3,
+    `stage 1 now has ${own.length} pictured words - the forward reach may be `
+    + `unnecessary, check the reasoning in app.js`);
+});
+
 console.log(`\n${passed} checks passed${failures.length ? `, ${failures.length} FAILED` : ''}`);
 process.exit(failures.length ? 1 : 0);

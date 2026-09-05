@@ -25,7 +25,37 @@
       <span class="tile-emoji">👆</span>
       <span>Sound<br>Buttons</span>
     </button>
+    <button class="game-tile" data-game="robot">
+      <span class="tile-emoji">🤖</span>
+      <span>Robot<br>Talk</span>
+    </button>
   </div>
+</section>
+
+<!-- ROBOT TALK -->
+<section id="screen-robot" class="screen">
+  <button class="back-btn" data-back>←</button>
+  <div class="stage-row" id="rt-stages"></div>
+  <div class="progress-dots" id="rt-dots"></div>
+
+  <div class="robot-wrap">
+    <div class="robot" id="rt-robot">
+      <div class="robot-antenna"></div>
+      <div class="robot-head">
+        <span class="robot-eye"></span>
+        <span class="robot-eye"></span>
+        <div class="robot-mouth"></div>
+      </div>
+      <div class="robot-body"></div>
+    </div>
+  </div>
+
+  <p class="rt-hint">What word is the robot saying?</p>
+  <div class="sound-row">
+    <button class="sound-btn" id="rt-say">🤖 Say it again</button>
+  </div>
+
+  <div class="picture-choices" id="rt-choices"></div>
 </section>
 
 <!-- SOUND BUTTONS -->

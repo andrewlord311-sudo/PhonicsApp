@@ -209,6 +209,7 @@ document.querySelectorAll('.game-tile').forEach(btn => {
     if (game === 'football') startFootballGame();
     if (game === 'puzzle') startPuzzleGame();
     if (game === 'soundbuttons') startSoundButtons();
+    if (game === 'robot') startRobotTalk();
   });
 });
 
@@ -221,6 +222,7 @@ document.getElementById('home-btn').addEventListener('click', () => showScreen('
 let lastCompletedGame = null;
 document.getElementById('play-again-btn').addEventListener('click', () => {
   if (lastCompletedGame === 'football') startFootballGame();
+  else if (lastCompletedGame === 'robot') startRobotTalk();
   else startPuzzleGame();
 });
 
@@ -588,14 +590,154 @@ function sayWholeWord() {
 document.getElementById('sb-say-word').addEventListener('click', sayWholeWord);
 document.getElementById('sb-next').addEventListener('click', nextSoundButtonsWord);
 
+// ---- Robot Talk ----
+// Oral blending: the robot says c... a... t in separate sounds and the child
+// works out the word, then taps its picture. Nothing is written down - that's
+// the point. This is the skill that turns knowing letters into reading, and
+// ELS teaches it from Nursery onward, before any grapheme at all.
+//
+// Which is why the pool is allowed to reach FORWARD past the selected stage
+// when it has to (below): blending by ear does not require having been taught
+// the spellings, so hearing /d/ /o/ /g/ at stage 1 is legitimate practice
+// rather than jumping ahead. Without that, stage 1 - which is exactly where
+// Felix is now - has only one picturable word and no playable game.
+//
+// Like Sound Buttons, it doesn't unlock stages: the stages are GRAPHEME
+// stages, and blending by ear demonstrates something else.
+let rtRound = 0;
+let rtTarget = null;
+let rtBusy = false;
+
+function picturedWords(stageId) {
+  const withPictures = (id) => {
+    const pool = stagePool(id);
+    return TEACHING_WEEKS.slice(0, id)
+      .flatMap(w => w.words)
+      .filter(word => CURRICULUM.pictures[word]
+        && segmentWord(word, pool) !== null);
+  };
+  let words = withPictures(stageId);
+  // Reach forward until there are enough for a round of three.
+  for (let id = stageId + 1; words.length < 3 && id <= MAX_STAGE; id++) {
+    words = withPictures(id);
+  }
+  return words;
+}
+
+function startRobotTalk() {
+  selectedStage = stageProgress.current;
+  rtRound = 0;
+  renderStageRow('rt-stages', selectRobotTalkStage);
+  renderProgressDots('rt-dots');
+  showScreen('screen-robot');
+  nextRobotRound();
+}
+
+function selectRobotTalkStage(stageId) {
+  selectedStage = stageId;
+  rtRound = 0;
+  renderStageRow('rt-stages', selectRobotTalkStage);
+  renderProgressDots('rt-dots');
+  nextRobotRound();
+}
+
+function nextRobotRound() {
+  if (rtRound >= ROUNDS_PER_SESSION) {
+    finishSession('robot');
+    return;
+  }
+  const pool = picturedWords(selectedStage);
+  const choicesWrap = document.getElementById('rt-choices');
+  if (pool.length < 3) {
+    rtTarget = null;
+    choicesWrap.innerHTML = '';
+    document.getElementById('rt-say').disabled = true;
+    return;
+  }
+  document.getElementById('rt-say').disabled = false;
+
+  const shuffled = shuffle(pool);
+  rtTarget = shuffled[0];
+  const options = shuffle(shuffled.slice(0, 3));
+
+  choicesWrap.innerHTML = '';
+  options.forEach(word => {
+    const btn = document.createElement('button');
+    btn.className = 'picture-btn';
+    btn.textContent = CURRICULUM.pictures[word];
+    // The word itself is never shown - reading it would answer the question.
+    btn.setAttribute('aria-label', word);
+    btn.addEventListener('click', () => handleRobotAnswer(word, btn));
+    choicesWrap.appendChild(btn);
+  });
+
+  setTimeout(sayRobotWord, 400);
+}
+
+// Speak the target one phoneme at a time, with a gap between each. Waiting
+// for each clip to actually end (rather than guessing at a fixed delay) keeps
+// the rhythm right whether the sound is a clipped /t/ or a long /sss/.
+function sayRobotWord() {
+  if (!rtTarget || rtBusy) return;
+  rtBusy = true;
+  const robot = document.getElementById('rt-robot');
+  const parts = segmentWord(rtTarget, stagePool(MAX_STAGE));
+
+  const speak = (i) => {
+    if (i >= parts.length) {
+      robot.classList.remove('talking');
+      rtBusy = false;
+      return;
+    }
+    robot.classList.add('talking');
+    const audio = new Audio(AUDIO_PATH(parts[i]));
+    audio.addEventListener('ended', () => setTimeout(() => speak(i + 1), 380));
+    audio.play().catch(() => {
+      // Autoplay refused or the file is missing - don't strand the button.
+      robot.classList.remove('talking');
+      rtBusy = false;
+    });
+  };
+  speak(0);
+}
+
+function handleRobotAnswer(word, btn) {
+  if (rtBusy) return;
+  if (word === rtTarget) {
+    btn.classList.add('correct-flash');
+    playSuccessChime();
+    // Only now is the whole word spoken - the reward for blending it, and
+    // the confirmation that what they heard in pieces is one word.
+    setTimeout(() => {
+      const audio = new Audio(`audio/words/${rtTarget}.wav`);
+      audio.play().catch(() => {});
+    }, 400);
+    document.querySelectorAll('#rt-dots .dot')[rtRound].classList.add('done');
+    rtRound++;
+    setTimeout(nextRobotRound, 1600);
+  } else {
+    btn.classList.add('wrong-flash');
+    playGentleBlip();
+    setTimeout(() => btn.classList.remove('wrong-flash'), 400);
+  }
+}
+
+document.getElementById('rt-say').addEventListener('click', sayRobotWord);
+
 // ---- Completion ----
 function finishSession(game) {
   lastCompletedGame = game;
-  const advanced = clearStageIfFrontier(selectedStage);
+  // Only the two grapheme-matching games can unlock a stage. The stages are
+  // grapheme stages, and Robot Talk demonstrates blending by ear - a real
+  // skill, but not the one being gated.
+  const advanced = game === 'robot' ? false : clearStageIfFrontier(selectedStage);
   playCompleteFanfare();
   const title = document.getElementById('complete-title');
   const message = document.getElementById('complete-message');
-  if (game === 'football') {
+  if (game === 'robot') {
+    title.textContent = '🤖 Beep boop — well done!';
+    message.textContent = 'You worked out every word from its sounds!';
+  } else if (game === 'football') {
     const { england, argentina } = footballScore;
     title.textContent = `Full Time! England ${england} – ${argentina} Argentina`;
     if (england > argentina) message.textContent = 'England win! What a match — every sound found the back of the net!';
