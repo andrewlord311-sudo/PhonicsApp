@@ -133,6 +133,27 @@ const CURRICULUM = {
     th: { phoneme: '/th/' },
   },
 
+  // Pictures for the games that show a word rather than spell it (Robot
+  // Talk, What starts with?). Emoji rather than drawn assets: they render
+  // everywhere, need no pipeline, and at four he won't care.
+  //
+  // Two rules when adding to this list:
+  //   1. NEVER repeat an emoji. Two words sharing a picture makes a round
+  //      with two identical answers - there's a test for it.
+  //   2. Stick to long-established emoji. The newer ones (🪆 doll, 🪭 fan)
+  //      show as a blank box on older tablets, which to a child is just a
+  //      broken game. Words with no *obvious, old* emoji are simply left
+  //      out - not every word needs a picture.
+  pictures: {
+    tap: '🚰', pin: '📌', man: '👨', map: '🗺️', sad: '😢', nap: '😴',
+    cat: '🐱', can: '🥫', cap: '🧢', cod: '🐟', dog: '🐶', kid: '🧒',
+    sock: '🧦', sick: '🤒', pot: '🍲', dot: '⚫', top: '👕',
+    red: '🔴', run: '🏃', rat: '🐀', net: '🥅', ten: '🔟', up: '⬆️',
+    cut: '✂️', cup: '☕', sun: '☀️', kiss: '💋',
+    hat: '👒', hot: '🔥', hug: '🤗', bat: '🦇', bus: '🚌', lip: '👄',
+    bell: '🔔', hill: '⛰️', bed: '🛏️', leg: '🦵',
+  },
+
   // School, week by week. `ready: false` means the audio for it doesn't
   // exist yet, so the app leaves the week out of the playable stages —
   // generate the clips, flip the flag, and it appears. `review: true` is an

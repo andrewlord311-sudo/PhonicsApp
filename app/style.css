@@ -371,3 +371,77 @@ h1 { font-size: 42px; margin: 0 0 4px; }
   .sound-dot { width: 26px; }
   .grapheme-btn.digraph .sound-dot { width: 48px; }
 }
+
+/* ---- Robot Talk ---- */
+.robot-wrap { display: flex; justify-content: center; margin: 8px 0 18px; }
+.robot { position: relative; width: 156px; }
+
+.robot-antenna {
+  width: 6px; height: 22px; background: #9aa4b2;
+  margin: 0 auto; border-radius: 3px 3px 0 0;
+}
+.robot-antenna::before {
+  content: ''; display: block;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: #ff6b6b; margin: -12px auto 0;
+  transition: background 0.2s ease;
+}
+.robot.talking .robot-antenna::before { background: #6bcB77; }
+
+/* Bottom padding has to clear the absolutely-positioned mouth AT ITS OPEN
+   height (24px), or the eyes and mouth overlap into one black blob - which
+   is exactly what the first version did. */
+.robot-head {
+  background: #cfd8e3; border-radius: 22px;
+  padding: 24px 18px 48px; position: relative;
+  display: flex; gap: 22px; justify-content: center;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.08);
+}
+.robot-eye {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: #2b2b2b;
+}
+.robot.talking .robot-eye { background: #4287f5; }
+
+.robot-mouth {
+  position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+  width: 54px; height: 8px; border-radius: 4px; background: #2b2b2b;
+  transition: height 0.12s ease;
+}
+/* The mouth opens and closes while a sound is playing - the only cue a
+   pre-reader gets that the robot is mid-word rather than finished. */
+.robot.talking .robot-mouth { animation: robot-talk 0.34s ease-in-out infinite; }
+@keyframes robot-talk {
+  0%, 100% { height: 8px; }
+  50%      { height: 24px; border-radius: 8px; }
+}
+
+.robot-body {
+  width: 100px; height: 38px; margin: 6px auto 0;
+  background: #9aa4b2; border-radius: 10px;
+}
+
+.rt-hint {
+  font-size: 20px; color: #6b6b6b; text-align: center; margin: 0 0 14px;
+}
+
+.picture-choices {
+  display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;
+}
+.picture-btn {
+  width: 120px; height: 120px;
+  font-size: 62px; line-height: 1;
+  font-family: inherit;
+  border: none; border-radius: 24px;
+  background: white;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.08), 0 6px 16px rgba(0,0,0,0.06);
+  cursor: pointer;
+  transition: transform 0.1s ease, background 0.2s ease;
+}
+.picture-btn:active { transform: scale(0.92); }
+.picture-btn.correct-flash { background: #6bcB77; }
+.picture-btn.wrong-flash { background: #ff8787; animation: shake 0.4s ease; }
+
+@media (max-width: 480px) {
+  .picture-btn { width: 92px; height: 92px; font-size: 46px; }
+}
