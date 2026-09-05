@@ -34,7 +34,27 @@
       <span class="tile-emoji">🎣</span>
       <span>Catch the<br>Sounds</span>
     </button>
+    <button class="game-tile" data-game="which">
+      <span class="tile-emoji">👂</span>
+      <span>Which<br>Sound?</span>
+    </button>
   </div>
+</section>
+
+<!-- WHICH SOUND? -->
+<section id="screen-which" class="screen">
+  <button class="back-btn" data-back>←</button>
+  <div class="stage-row" id="ws-stages"></div>
+  <div class="progress-dots" id="ws-dots"></div>
+
+  <p class="ws-hint">Which sound does this letter say?</p>
+  <button class="ws-letter" id="ws-letter"></button>
+
+  <div class="sound-row">
+    <button class="sound-btn" id="ws-replay">🔊 Hear them again</button>
+  </div>
+
+  <div class="sound-cards" id="ws-choices"></div>
 </section>
 
 <!-- CATCH THE SOUNDS -->

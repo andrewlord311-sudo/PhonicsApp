@@ -14,6 +14,7 @@ no dependencies — open `app/index.html` and it runs.
 | **Sound Buttons** | A word on screen split into its graphemes, each tappable to hear its sound, then "Read the word" to hear it blended. |
 | **Robot Talk** | A robot says `c… a… t` in separate sounds; tap the picture of the word. Nothing is written down. |
 | **Catch the Sounds** | Hear a word, build it from letter tiles — one box per sound. |
+| **Which Sound?** | See a letter, hear three sounds, tap the one it says. |
 
 **Sound Buttons is not a quiz** — there's no right answer to get and no way
 to fail. It's the tool schools actually use: press each sound in turn, then
@@ -71,6 +72,23 @@ The two **matching** games (Football, Puzzle) have a **Letter name** button
 alongside **Hear it again**, so the sound (`sss`) and the name (`ess`) stay
 separable — that distinction is the whole point of synthetic phonics. They
 are also the only two games that unlock stages, for the reasons below.
+
+**Which Sound?** is grapheme to phoneme — the reverse of the matching games,
+and the one where the *answers* are sounds, so there is nothing to look at and
+compare. The three sounds play in order first, each card lighting as it
+speaks; then tapping a card both plays its sound and answers with it. One tap,
+no listen-mode versus answer-mode to understand, and a wrong tap still plays
+what that card says, so picking wrong teaches something instead of just
+buzzing. Tapping the letter itself gives its name.
+
+**Which games unlock a stage, and why.** Football, Dinosaur Puzzle and Which
+Sound? do; Robot Talk and Catch the Sounds don't. The line is whether the game
+draws its target from the whole cumulative pool. The three that unlock pick a
+grapheme straight out of it, so clearing them says something about the newest
+week specifically. Robot Talk is oral blending, which needs no grapheme
+knowledge at all; Catch the Sounds picks a *word*, and a stage-3 word can be
+"sat" — spelled entirely from stage-1 graphemes, so finishing it is weak
+evidence about anything new.
 
 ## Audio
 
@@ -184,7 +202,7 @@ built from taught graphemes returns null and is simply not offered — the
 honest answer for a word that isn't decodable yet.
 
 ```sh
-node test_curriculum.mjs   # 30 checks
+node test_curriculum.mjs   # 34 checks
 ```
 
 The tests read the real shipped `curriculum.js`, so a typo in the data fails

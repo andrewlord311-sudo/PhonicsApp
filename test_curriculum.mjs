@@ -456,5 +456,60 @@ check('two decoys are offered wherever the stage can spare them', () => {
     `expected ${parts.length + 2} tiles, got ${tiles.length}`);
 });
 
+console.log('\nwhich sound? - three distinct sounds, one right');
+
+// Mirrors nextWhichRound()'s option build in app.js.
+function whichOptions(pool) {
+  const target = pool[Math.floor(Math.random() * pool.length)];
+  const targetPhoneme = PHONEME_OF(target);
+  const others = [...new Set(pool.map(PHONEME_OF))]
+    .filter(p => p !== targetPhoneme);
+  for (let i = others.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [others[i], others[j]] = [others[j], others[i]];
+  }
+  return { target, targetPhoneme, options: [targetPhoneme, ...others.slice(0, 2)] };
+}
+
+check('the three sounds offered are always different from each other', () => {
+  // Here the options ARE sounds, so two options sharing a phoneme would be
+  // two identical audio clips - indistinguishable, and one marked wrong.
+  for (const stage of STAGES) {
+    for (let n = 0; n < 3000; n++) {
+      const { options } = whichOptions(stage.letters);
+      assert(new Set(options).size === options.length,
+        `stage ${stage.id} offered ${options.join(' / ')}`);
+    }
+  }
+});
+
+check("the letter's own sound is always one of the options", () => {
+  for (const stage of STAGES) {
+    for (let n = 0; n < 2000; n++) {
+      const { target, targetPhoneme, options } = whichOptions(stage.letters);
+      assert(options.includes(targetPhoneme),
+        `<${target}> says ${targetPhoneme}, not offered`);
+    }
+  }
+});
+
+check('every stage has enough distinct sounds for three options', () => {
+  for (const stage of STAGES) {
+    const distinct = new Set(stage.letters.map(PHONEME_OF)).size;
+    assert(distinct >= 3,
+      `stage ${stage.id} has only ${distinct} distinct sound(s)`);
+  }
+});
+
+check('every option maps to a clip that exists', () => {
+  for (const stage of STAGES) {
+    for (const g of stage.letters) {
+      const sound = CURRICULUM.phonemes[PHONEME_OF(g)].sound;
+      assert(existsSync(join(APP, 'audio', `${sound}.wav`)),
+        `<${g}> needs ${sound}.wav`);
+    }
+  }
+});
+
 console.log(`\n${passed} checks passed${failures.length ? `, ${failures.length} FAILED` : ''}`);
 process.exit(failures.length ? 1 : 0);
