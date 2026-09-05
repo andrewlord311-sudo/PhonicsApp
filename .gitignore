@@ -3,3 +3,6 @@
 # Dev scratch — recording takes made with record.sh, not part of the app
 audio_test/
 scratch_voice_samples/
+
+# Superseded word clips, kept locally when --force regenerates one
+app/audio/_backup_words/

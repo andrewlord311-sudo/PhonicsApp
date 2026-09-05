@@ -1,0 +1,117 @@
+# ELS Reception Autumn 1 — decodable words + harder to read and spell words.
+#
+# Grouped by the ELS teaching week Boxted St Peter's follows (from the school's
+# own ELS handbook). Each week is cumulative: week 3's words only use graphemes
+# taught in weeks 1-3.
+#
+# "HRS" = harder to read and spell — ELS's term. Not "tricky words", which is
+# Little Wandle's. Worth matching the school's language exactly.
+#
+#   ./gen_words.py --from wordlists/els-autumn1.txt
+
+# --- Week 1: s a t p --- HRS: I, the, no
+at
+sat
+pat
+tap
+sap
+i
+the
+no
+
+# --- Week 2: i n m d --- HRS: put, of, is
+it
+in
+nip
+tin
+tip
+pin
+pit
+sit
+sip
+man
+map
+mad
+dad
+did
+mat
+nap
+tan
+sad
+dip
+put
+of
+is
+
+# --- Week 3: g o c/k ck --- HRS: to, go, into
+cat
+can
+cap
+cot
+cod
+dog
+got
+gap
+kit
+kid
+sock
+kick
+pick
+sick
+top
+pot
+not
+on
+dot
+to
+go
+into
+
+# --- Week 4: e u r ss --- HRS: pull
+red
+run
+rug
+rat
+rip
+get
+pet
+net
+ten
+up
+us
+cut
+cup
+mud
+mug
+sun
+kiss
+miss
+mess
+less
+pull
+
+# --- Week 6: h b f/ff l/ll --- HRS: as, his
+hat
+hit
+hot
+hug
+bat
+bed
+big
+bus
+fit
+fun
+fan
+fat
+leg
+lot
+lip
+bell
+fell
+tell
+off
+hill
+doll
+full
+as
+his
