@@ -210,6 +210,7 @@ document.querySelectorAll('.game-tile').forEach(btn => {
     if (game === 'puzzle') startPuzzleGame();
     if (game === 'soundbuttons') startSoundButtons();
     if (game === 'robot') startRobotTalk();
+    if (game === 'catch') startCatchSounds();
   });
 });
 
@@ -223,6 +224,7 @@ let lastCompletedGame = null;
 document.getElementById('play-again-btn').addEventListener('click', () => {
   if (lastCompletedGame === 'football') startFootballGame();
   else if (lastCompletedGame === 'robot') startRobotTalk();
+  else if (lastCompletedGame === 'catch') startCatchSounds();
   else startPuzzleGame();
 });
 
@@ -724,19 +726,176 @@ function handleRobotAnswer(word, btn) {
 
 document.getElementById('rt-say').addEventListener('click', sayRobotWord);
 
+// ---- Catch the Sounds ----
+// Segmenting to spell: hear "cat", build it from tiles. The inverse of Robot
+// Talk, and the one that feeds writing - it needs RECALL of a spelling, not
+// just recognition of one.
+//
+// Tap to place, not drag. Dragging is fiddly for four-year-old fingers on a
+// tablet, and a dropped tile that lands nowhere reads as the app ignoring
+// you. Tapping a tile fills the next empty box; tapping a filled box takes
+// that sound back out.
+//
+// Like the other word games it does NOT unlock stages, and here for a
+// specific reason: a stage-3 word can be "sat", spelled entirely from
+// stage-1 graphemes, so finishing it is weak evidence about the graphemes
+// the newest week actually introduced. The matching games draw their target
+// from the whole cumulative pool, so clearing those really does say
+// something about the newest set.
+let ctsRound = 0;
+let ctsWord = null;          // { word, parts }
+let ctsPlaced = [];          // graphemes placed so far, in order
+
+function startCatchSounds() {
+  selectedStage = stageProgress.current;
+  ctsRound = 0;
+  renderStageRow('cts-stages', selectCatchStage);
+  renderProgressDots('cts-dots');
+  showScreen('screen-catch');
+  nextCatchRound();
+}
+
+function selectCatchStage(stageId) {
+  selectedStage = stageId;
+  ctsRound = 0;
+  renderStageRow('cts-stages', selectCatchStage);
+  renderProgressDots('cts-dots');
+  nextCatchRound();
+}
+
+// Tiles the child chooses from: the word's own graphemes, plus decoys that
+// are AUDIBLY different. A decoy sharing a phoneme with any part of the
+// target (offering <k> or <ck> while spelling "cat") would be a spelling
+// distinction the sound cannot possibly settle - unfair at four, and it
+// would teach that listening harder is the answer when it isn't.
+function catchTiles(parts, pool) {
+  const targetSounds = new Set(parts.map(PHONEME_OF));
+  const safe = pool.filter(g => !targetSounds.has(PHONEME_OF(g)));
+  // One spelling per remaining sound, so the decoys aren't three ways of
+  // writing the same thing either.
+  const bySound = new Map();
+  safe.forEach(g => {
+    const p = PHONEME_OF(g);
+    if (!bySound.has(p)) bySound.set(p, []);
+    bySound.get(p).push(g);
+  });
+  const decoys = shuffle([...bySound.values()])
+    .slice(0, 2)
+    .map(spellings => spellings[Math.floor(Math.random() * spellings.length)]);
+  return shuffle([...parts, ...decoys]);
+}
+
+function nextCatchRound() {
+  if (ctsRound >= ROUNDS_PER_SESSION) {
+    finishSession('catch');
+    return;
+  }
+  const pool = stageWords(selectedStage);
+  if (pool.length === 0) {
+    ctsWord = null;
+    document.getElementById('cts-boxes').innerHTML = '';
+    document.getElementById('cts-tiles').innerHTML = '';
+    document.getElementById('cts-say').disabled = true;
+    return;
+  }
+  document.getElementById('cts-say').disabled = false;
+
+  const choices = pool.length > 1 && ctsWord
+    ? pool.filter(w => w.word !== ctsWord.word) : pool;
+  ctsWord = choices[Math.floor(Math.random() * choices.length)];
+  ctsPlaced = [];
+
+  // The picture, when there is one, is a comprehension aid only - it says
+  // WHICH word, never how it is spelled.
+  const pic = document.getElementById('cts-picture');
+  pic.textContent = CURRICULUM.pictures[ctsWord.word] || '';
+
+  renderCatchBoxes();
+  const tiles = catchTiles(ctsWord.parts, stagePool(selectedStage));
+  const tray = document.getElementById('cts-tiles');
+  tray.innerHTML = '';
+  tiles.forEach(grapheme => {
+    const btn = document.createElement('button');
+    btn.className = 'letter-btn small-letter'
+      + (grapheme.length > 1 ? ' wide-letter' : '');
+    btn.textContent = grapheme;
+    btn.addEventListener('click', () => placeCatchTile(grapheme, btn));
+    tray.appendChild(btn);
+  });
+
+  setTimeout(sayCatchWord, 400);
+}
+
+function renderCatchBoxes() {
+  const wrap = document.getElementById('cts-boxes');
+  wrap.innerHTML = '';
+  ctsWord.parts.forEach((_, i) => {
+    const box = document.createElement('button');
+    const placed = ctsPlaced[i];
+    box.className = 'sound-box' + (placed ? ' filled' : '');
+    box.textContent = placed || '';
+    if (placed) {
+      // Tap a filled box to take that sound back out - the undo a child
+      // needs when they've placed the right letter in the wrong order.
+      box.addEventListener('click', () => {
+        ctsPlaced.splice(i, 1);
+        renderCatchBoxes();
+      });
+    }
+    wrap.appendChild(box);
+  });
+}
+
+function placeCatchTile(grapheme, btn) {
+  if (!ctsWord || ctsPlaced.length >= ctsWord.parts.length) return;
+  const expected = ctsWord.parts[ctsPlaced.length];
+  if (grapheme !== expected) {
+    btn.classList.add('wrong-flash');
+    playGentleBlip();
+    setTimeout(() => btn.classList.remove('wrong-flash'), 400);
+    return;
+  }
+  ctsPlaced.push(grapheme);
+  playLetterSound(grapheme);
+  renderCatchBoxes();
+
+  if (ctsPlaced.length === ctsWord.parts.length) {
+    playSuccessChime();
+    setTimeout(() => {
+      const audio = new Audio(`audio/words/${ctsWord.word}.wav`);
+      audio.play().catch(() => {});
+    }, 450);
+    document.querySelectorAll('#cts-dots .dot')[ctsRound].classList.add('done');
+    ctsRound++;
+    setTimeout(nextCatchRound, 1700);
+  }
+}
+
+function sayCatchWord() {
+  if (!ctsWord) return;
+  const audio = new Audio(`audio/words/${ctsWord.word}.wav`);
+  audio.play().catch(() => {});
+}
+
+document.getElementById('cts-say').addEventListener('click', sayCatchWord);
+
 // ---- Completion ----
 function finishSession(game) {
   lastCompletedGame = game;
   // Only the two grapheme-matching games can unlock a stage. The stages are
   // grapheme stages, and Robot Talk demonstrates blending by ear - a real
   // skill, but not the one being gated.
-  const advanced = game === 'robot' ? false : clearStageIfFrontier(selectedStage);
+  const advanced = (game === 'robot' || game === 'catch')
+    ? false : clearStageIfFrontier(selectedStage);
   playCompleteFanfare();
   const title = document.getElementById('complete-title');
   const message = document.getElementById('complete-message');
   if (game === 'robot') {
     title.textContent = '🤖 Beep boop — well done!';
     message.textContent = 'You worked out every word from its sounds!';
+  } else if (game === 'catch') {
+    title.textContent = '🎣 You caught every sound!';
+    message.textContent = 'You built each word from the sounds you heard!';
   } else if (game === 'football') {
     const { england, argentina } = footballScore;
     title.textContent = `Full Time! England ${england} – ${argentina} Argentina`;

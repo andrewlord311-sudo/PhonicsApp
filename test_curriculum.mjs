@@ -358,5 +358,80 @@ check('stage 1 is the one that needs the forward reach', () => {
     + `unnecessary, check the reasoning in app.js`);
 });
 
+console.log('\ncatch the sounds - decoys must be audibly wrong');
+
+// Mirrors catchTiles() in app.js.
+function catchTiles(parts, pool) {
+  const targetSounds = new Set(parts.map(PHONEME_OF));
+  const safe = pool.filter(g => !targetSounds.has(PHONEME_OF(g)));
+  const bySound = new Map();
+  safe.forEach(g => {
+    const p = PHONEME_OF(g);
+    if (!bySound.has(p)) bySound.set(p, []);
+    bySound.get(p).push(g);
+  });
+  const values = [...bySound.values()];
+  for (let i = values.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [values[i], values[j]] = [values[j], values[i]];
+  }
+  const decoys = values.slice(0, 2)
+    .map(s => s[Math.floor(Math.random() * s.length)]);
+  return [...parts, ...decoys];
+}
+
+check('no decoy ever shares a sound with the word being spelled', () => {
+  // The unfair case: spelling "cat" with <k> or <ck> on offer. Both say /k/,
+  // so the child cannot possibly hear which is right - it is a spelling
+  // convention, not a sound, and marking it wrong teaches that listening
+  // harder is the answer when it isn't.
+  for (const stage of STAGES) {
+    const pool = stage.letters;
+    const words = TEACHING_WEEKS.slice(0, stage.id).flatMap(w => w.words)
+      .map(w => segmentWord(w, pool)).filter(Boolean);
+    for (const parts of words) {
+      const targetSounds = new Set(parts.map(PHONEME_OF));
+      for (let n = 0; n < 200; n++) {
+        const tiles = catchTiles(parts, pool);
+        const decoys = tiles.slice(parts.length);
+        for (const d of decoys) {
+          assert(!targetSounds.has(PHONEME_OF(d)),
+            `spelling ${parts.join('')} offered <${d}> (${PHONEME_OF(d)}), `
+            + `which the word already uses`);
+        }
+      }
+    }
+  }
+});
+
+check('the word can always actually be built from its tiles', () => {
+  for (const stage of STAGES) {
+    const pool = stage.letters;
+    const words = TEACHING_WEEKS.slice(0, stage.id).flatMap(w => w.words)
+      .map(w => ({ w, parts: segmentWord(w, pool) })).filter(e => e.parts);
+    for (const { w, parts } of words) {
+      const tiles = catchTiles(parts, pool);
+      // Every grapheme of the word must be present as many times as needed.
+      const counts = {};
+      tiles.forEach(t => { counts[t] = (counts[t] || 0) + 1; });
+      const need = {};
+      parts.forEach(p => { need[p] = (need[p] || 0) + 1; });
+      for (const [g, n] of Object.entries(need)) {
+        assert((counts[g] || 0) >= n, `${w} needs ${n}x <${g}>, tiles had ${counts[g] || 0}`);
+      }
+    }
+  }
+});
+
+check('two decoys are offered wherever the stage can spare them', () => {
+  // Stage 1 is s a t p: spelling "sat" leaves only <p>, so one decoy is the
+  // honest maximum there. Anywhere richer should manage two.
+  const stage = STAGES[STAGES.length - 1];
+  const parts = segmentWord('cat', stage.letters);
+  const tiles = catchTiles(parts, stage.letters);
+  assert(tiles.length === parts.length + 2,
+    `expected ${parts.length + 2} tiles, got ${tiles.length}`);
+});
+
 console.log(`\n${passed} checks passed${failures.length ? `, ${failures.length} FAILED` : ''}`);
 process.exit(failures.length ? 1 : 0);
