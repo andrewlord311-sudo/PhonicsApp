@@ -313,3 +313,61 @@ h1 { font-size: 42px; margin: 0 0 4px; }
 }
 .big-btn.secondary { background: #ffd166; color: #2b2b2b; }
 .big-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,0.1); }
+
+/* ---- Sound Buttons ---- */
+/* The word is the whole screen here: big enough to read across a table, and
+   each grapheme is its own tappable target with a "sound button" dot beneath
+   it -- one dot per SOUND, so <ck> reads as one, not two. */
+.sb-hint {
+  font-size: 20px; color: #6b6b6b; margin: 4px 0 24px;
+  text-align: center;
+}
+.sb-word {
+  display: flex; justify-content: center; align-items: flex-end;
+  gap: 10px; flex-wrap: wrap;
+  margin-bottom: 40px;
+  transition: transform 0.25s ease;
+}
+.sb-word.blending { transform: scale(1.08); }
+
+.grapheme-btn {
+  font-family: inherit;
+  border: none; background: transparent;
+  padding: 8px 6px 0;
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  cursor: pointer;
+  border-radius: 18px;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+.grapheme-btn:active { transform: scale(0.94); }
+.grapheme-btn.lit { background: #fff3cd; }
+
+.grapheme-text {
+  font-size: 96px; font-weight: bold; line-height: 1;
+  color: #2b2b2b;
+}
+/* A digraph sits slightly smaller so a three-grapheme word like s-o-ck still
+   fits a phone screen without wrapping mid-word. */
+.grapheme-btn.digraph .grapheme-text { font-size: 76px; }
+
+.sound-dot {
+  display: block; height: 14px; width: 34px;
+  border-radius: 8px; background: #4287f5;
+  transition: background 0.15s ease;
+}
+/* Wider under a digraph: the dot is the visual claim "this is ONE sound",
+   so it has to span the whole spelling. */
+.grapheme-btn.digraph .sound-dot { width: 62px; }
+.grapheme-btn.lit .sound-dot { background: #ffb703; }
+
+.sb-actions {
+  display: flex; gap: 16px; flex-wrap: wrap; justify-content: center;
+}
+.big-btn:disabled { opacity: 0.45; cursor: default; }
+
+@media (max-width: 480px) {
+  .grapheme-text { font-size: 72px; }
+  .grapheme-btn.digraph .grapheme-text { font-size: 56px; }
+  .sound-dot { width: 26px; }
+  .grapheme-btn.digraph .sound-dot { width: 48px; }
+}

@@ -46,6 +46,46 @@ function stagePool(stageId) {
   return STAGES[stageId - 1].letters;
 }
 
+// ---- Splitting a word into the graphemes it is actually spelled with ----
+// This is the bit that needs the phoneme model to exist at all. "sock" is
+// s-o-ck, three sounds, not s-o-c-k; "kiss" is k-i-ss; "off" is o-ff. Get
+// this wrong and the app teaches a child to sound out letters instead of
+// graphemes, which is precisely the habit synthetic phonics exists to avoid.
+//
+// Longest match first, and only against graphemes taught by this stage, so a
+// word can never be split using a spelling the child hasn't met. Returns null
+// when the word cannot be built from taught graphemes at all - which is the
+// honest answer for a word that isn't decodable yet, not an error.
+const MAX_GRAPHEME_LEN = 3;          // "igh" is the longest ELS teaches here
+function segmentWord(word, pool) {
+  const parts = [];
+  let i = 0;
+  while (i < word.length) {
+    let matched = null;
+    for (let len = Math.min(MAX_GRAPHEME_LEN, word.length - i); len >= 1; len--) {
+      const chunk = word.slice(i, i + len);
+      if (pool.includes(chunk)) { matched = chunk; break; }
+    }
+    if (!matched) return null;
+    parts.push(matched);
+    i += matched.length;
+  }
+  return parts;
+}
+
+// Decodable words for a stage: everything taught up to it that can actually
+// be spelled out of the graphemes taught up to it. The `hrs` lists are
+// deliberately excluded -- "the", "of", "put" are *harder to read and spell*
+// precisely because sounding them out doesn't work, so putting them in a
+// blending game would teach the wrong lesson.
+function stageWords(stageId) {
+  const pool = stagePool(stageId);
+  return TEACHING_WEEKS.slice(0, stageId)
+    .flatMap(w => w.words)
+    .map(word => ({ word, parts: segmentWord(word, pool) }))
+    .filter(entry => entry.parts !== null);
+}
+
 // Progress is shared across both games - it's the same underlying skill,
 // not a per-game thing. Persisted so it survives closing the app.
 const STAGE_STORAGE_KEY = 'felix_stage_progress';
@@ -168,6 +208,7 @@ document.querySelectorAll('.game-tile').forEach(btn => {
     const game = btn.dataset.game;
     if (game === 'football') startFootballGame();
     if (game === 'puzzle') startPuzzleGame();
+    if (game === 'soundbuttons') startSoundButtons();
   });
 });
 
@@ -469,6 +510,83 @@ function handlePuzzleAnswer(letter, btn) {
     setTimeout(() => btn.classList.remove('wrong-flash'), 400);
   }
 }
+
+// ---- Sound Buttons ----
+// Not a quiz. This is the tool schools actually use: the child presses each
+// sound in turn, then says the word. There is no right answer to get and no
+// way to fail, which is what makes it the right thing to open a session with
+// -- and the reason it deliberately does NOT unlock stages. Unlocking should
+// mean "can pick the letter out from its sound", which is what the two
+// matching games test; nothing here demonstrates that.
+let sbWords = [];
+let sbCurrent = null;
+
+function startSoundButtons() {
+  selectedStage = stageProgress.current;
+  renderStageRow('sb-stages', selectSoundButtonsStage);
+  showScreen('screen-soundbuttons');
+  nextSoundButtonsWord();
+}
+
+function selectSoundButtonsStage(stageId) {
+  selectedStage = stageId;
+  renderStageRow('sb-stages', selectSoundButtonsStage);
+  nextSoundButtonsWord();
+}
+
+function nextSoundButtonsWord() {
+  const pool = stageWords(selectedStage);
+  const wordEl = document.getElementById('sb-word');
+  const hintEl = document.getElementById('sb-hint');
+
+  if (pool.length === 0) {
+    // Reachable honestly: an early stage may teach graphemes before any
+    // fully decodable word exists. Say so rather than showing a blank box.
+    sbCurrent = null;
+    wordEl.innerHTML = '';
+    hintEl.textContent = 'No words to build with these sounds yet — '
+      + 'try a later stage.';
+    document.getElementById('sb-say-word').disabled = true;
+    return;
+  }
+
+  // Avoid repeating the word that's already on screen when there's a choice.
+  const choices = pool.length > 1 && sbCurrent
+    ? pool.filter(w => w.word !== sbCurrent.word) : pool;
+  sbCurrent = choices[Math.floor(Math.random() * choices.length)];
+  hintEl.textContent = 'Tap each sound, then read the word';
+  document.getElementById('sb-say-word').disabled = false;
+
+  wordEl.innerHTML = '';
+  sbCurrent.parts.forEach(grapheme => {
+    const btn = document.createElement('button');
+    btn.className = 'grapheme-btn'
+      + (grapheme.length > 1 ? ' digraph' : '');
+    btn.innerHTML = `<span class="grapheme-text">${grapheme}</span>`
+      // The dot under each grapheme is the "sound button" schools draw in
+      // pencil under a word - one per SOUND, wider under a digraph, so the
+      // child can see that <ck> is one sound and not two.
+      + '<span class="sound-dot"></span>';
+    btn.addEventListener('click', () => {
+      playLetterSound(grapheme);
+      btn.classList.add('lit');
+      setTimeout(() => btn.classList.remove('lit'), 450);
+    });
+    wordEl.appendChild(btn);
+  });
+}
+
+function sayWholeWord() {
+  if (!sbCurrent) return;
+  const wordEl = document.getElementById('sb-word');
+  wordEl.classList.add('blending');
+  setTimeout(() => wordEl.classList.remove('blending'), 700);
+  const audio = new Audio(`audio/words/${sbCurrent.word}.wav`);
+  audio.play().catch(() => {});
+}
+
+document.getElementById('sb-say-word').addEventListener('click', sayWholeWord);
+document.getElementById('sb-next').addEventListener('click', nextSoundButtonsWord);
 
 // ---- Completion ----
 function finishSession(game) {

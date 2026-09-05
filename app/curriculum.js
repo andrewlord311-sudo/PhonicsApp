@@ -172,7 +172,11 @@ const CURRICULUM = {
       graphemes: ['h', 'b', 'f', 'ff', 'l', 'll'],
       words: ['hat', 'hit', 'hot', 'hug', 'bat', 'bed', 'big', 'bus', 'fit',
               'fun', 'fan', 'fat', 'leg', 'lot', 'lip', 'bell', 'fell',
-              'tell', 'off', 'hill', 'doll', 'full'],
+              // "full" deliberately absent: its <u> says /oo/, like "pull"
+              // (which ELS lists as harder to read and spell for exactly
+              // that reason), so it cannot be sounded out with Phase 2 /u/.
+              // The clip exists in audio/words/ for when it is taught.
+              'tell', 'off', 'hill', 'doll'],
       hrs: ['as', 'his'] },
 
     // Autumn 2 onward is recorded here so the shape is known, but only the
