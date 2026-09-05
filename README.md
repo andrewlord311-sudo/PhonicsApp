@@ -13,6 +13,7 @@ no dependencies — open `app/index.html` and it runs.
 | **Dinosaur Puzzle** | Same sound-to-letter matching, revealing a dinosaur picture piece by piece. |
 | **Sound Buttons** | A word on screen split into its graphemes, each tappable to hear its sound, then "Read the word" to hear it blended. |
 | **Robot Talk** | A robot says `c… a… t` in separate sounds; tap the picture of the word. Nothing is written down. |
+| **Catch the Sounds** | Hear a word, build it from letter tiles — one box per sound. |
 
 **Sound Buttons is not a quiz** — there's no right answer to get and no way
 to fail. It's the tool schools actually use: press each sound in turn, then
@@ -44,6 +45,27 @@ Pictures are emoji, in `curriculum.pictures`. Two rules when adding: never
 repeat an emoji (two words sharing a picture makes a round with two identical
 answers — there's a test), and stick to long-established emoji, since newer
 ones like 🪆 and 🪭 render as an empty box on older tablets.
+
+**Catch the Sounds is segmenting** — the inverse of Robot Talk, and the one
+that feeds writing, because it needs *recall* of a spelling rather than
+recognition of one. One box per sound, so `sock` gets three, not four.
+
+It is **tap to place, not drag**. Dragging is fiddly for four-year-old
+fingers on a tablet, and a tile that lands nowhere reads as the app ignoring
+you. Tapping a tile fills the next box; tapping a filled box takes that sound
+back out, which is the undo needed when the right letter goes in the wrong
+order.
+
+**Every decoy tile is audibly wrong.** A decoy never shares a phoneme with
+any part of the target — spelling "cat" will never offer `k` or `ck`. Those
+say the same /k/, so no amount of listening could settle it: it's a spelling
+convention, and marking it wrong would teach that listening harder is the
+answer when it isn't. There's a test.
+
+It doesn't unlock stages either, for a specific reason: a stage-3 word can be
+"sat", spelled entirely from stage-1 graphemes, so finishing it says little
+about the graphemes the newest week introduced. The matching games draw their
+target from the whole cumulative pool, so clearing those does.
 
 The two **matching** games (Football, Puzzle) have a **Letter name** button
 alongside **Hear it again**, so the sound (`sss`) and the name (`ess`) stay
@@ -144,7 +166,7 @@ built from taught graphemes returns null and is simply not offered — the
 honest answer for a word that isn't decodable yet.
 
 ```sh
-node test_curriculum.mjs   # 25 checks
+node test_curriculum.mjs   # 28 checks
 ```
 
 The tests read the real shipped `curriculum.js`, so a typo in the data fails
