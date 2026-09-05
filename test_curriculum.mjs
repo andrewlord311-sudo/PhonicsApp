@@ -37,7 +37,9 @@ const TEACHING_WEEKS = CURRICULUM.weeks.filter(
   w => w.ready && w.graphemes.length > 0);
 const STAGES = TEACHING_WEEKS.map((week, i) => ({
   id: i + 1,
-  label: week.label,
+  term: week.term,
+  week: week.week,
+  label: `${week.term} \u00b7 week ${week.week}`,
   letters: TEACHING_WEEKS.slice(0, i + 1).flatMap(w => w.graphemes),
 }));
 const PHONEME_OF = (g) => CURRICULUM.graphemes[g].phoneme;
@@ -117,11 +119,32 @@ check('a week that is not ready says what it needs', () => {
 console.log('\nstages');
 
 check('stages skip review weeks and unready weeks', () => {
-  const ids = STAGES.map(s => s.label);
-  assert(!ids.some(l => /week 5/.test(l)),
-    'the assess-and-review week should not be a stage');
+  // Assert on the week NUMBER, not on a formatted string: the previous
+  // version tested a label that had silently become undefined, so the regex
+  // matched nothing and the check passed without checking anything.
+  const a1 = STAGES.filter(s => s.term === 'Autumn 1').map(s => s.week);
+  assert(!a1.includes(5),
+    `Autumn 1 week 5 is assess-and-review and should not be a stage: ${a1}`);
+  assert(a1.join(',') === '1,2,3,4,6', `Autumn 1 stages were ${a1.join(',')}`);
   assert(STAGES.length === 6,
     `expected 6 playable stages (A1 w1-4, w6, A2 w1), got ${STAGES.length}`);
+});
+
+check('every week declares a term and a week number', () => {
+  for (const week of CURRICULUM.weeks) {
+    assert(typeof week.term === 'string' && week.term.length,
+      `${week.id} has no term`);
+    assert(Number.isInteger(week.week), `${week.id} has no week number`);
+  }
+});
+
+check('the button number is the school\'s week number', () => {
+  // What the stage buttons render. If these ever drift apart, the whole
+  // point of showing the week is lost.
+  const shown = STAGES.map(s => `${s.term.split(' ').map(
+    p => /^\d+$/.test(p) ? p : p[0]).join('')}:${s.week}`);
+  assert(shown.join(' ') === 'A1:1 A1:2 A1:3 A1:4 A1:6 A2:1',
+    `buttons would read ${shown.join(' ')}`);
 });
 
 check('stages stay cumulative', () => {

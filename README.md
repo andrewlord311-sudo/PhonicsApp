@@ -130,6 +130,24 @@ Autumn 1 week 3 — one sound, three spellings — and by Phase 5 /ai/ is
   `c`, `k` and `ck` all play `phase2/c.wav`.
 - **`weeks`** — what school taught, in ELS order, graphemes only.
 
+### A stage is a school week, and says so
+
+The stage buttons show **the school's own week number**, grouped by term:
+`A1 1 2 3 4 6 · A2 1`. The jump from 4 to 6 is real — ELS week 5 is
+assess-and-review, so it teaches no grapheme and isn't a stage. Locked weeks
+still show their number rather than a padlock, so "what's next" stays
+readable; they're just pale and disabled.
+
+Under the buttons, a caption names the selected week in full and what it
+covers — *"Autumn 1 · week 3 / new: g o c k ck · practising 13 sounds"* — and
+the home screen carries an **"Up to: Autumn 1 · week 3"** line. All of that is
+for the adult in the room; Felix can't read it yet, but "which week is he
+practising?" should be answerable at a glance.
+
+The numbering comes from `term` and `week` on each curriculum entry, not from
+its position in the list, and there's a test asserting the buttons would read
+exactly `A1:1 A1:2 A1:3 A1:4 A1:6 A2:1`.
+
 A **stage** is derived, not written down: it's a week that introduces
 something. Assess-and-review weeks teach no new grapheme so they aren't
 stages, and a week with `ready: false` is one whose audio doesn't exist yet —
@@ -166,7 +184,7 @@ built from taught graphemes returns null and is simply not offered — the
 honest answer for a word that isn't decodable yet.
 
 ```sh
-node test_curriculum.mjs   # 28 checks
+node test_curriculum.mjs   # 30 checks
 ```
 
 The tests read the real shipped `curriculum.js`, so a typo in the data fails

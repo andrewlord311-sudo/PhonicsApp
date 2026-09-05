@@ -37,7 +37,12 @@ const TEACHING_WEEKS = CURRICULUM.weeks.filter(
   w => w.ready && w.graphemes.length > 0);
 const STAGES = TEACHING_WEEKS.map((week, i) => ({
   id: i + 1,
-  label: week.label,
+  // The school's own numbering, not this list's position: Autumn 1 runs
+  // 1,2,3,4 then 6, because week 5 is assess-and-review. The buttons show
+  // `week`, so a button reading 6 really is the sixth week of his term.
+  term: week.term,
+  week: week.week,
+  label: `${week.term} \u00b7 week ${week.week}`,
   letters: TEACHING_WEEKS.slice(0, i + 1).flatMap(w => w.graphemes),
 }));
 const MAX_STAGE = STAGES.length;
@@ -128,22 +133,72 @@ function clearStageIfFrontier(stageId) {
   return false;
 }
 
-// Shared stage-picker row, used identically in both games. `onSelect(stageId)`
+// Shared stage-picker row, used identically by every game. `onSelect(stageId)`
 // is called when an unlocked stage button is tapped.
+//
+// A stage IS a school week, so the row says so rather than making anyone
+// remember that "stage 3" means Autumn 1 week 3. The caption is for the adult
+// in the room - Felix can't read it yet - so it names the week, the graphemes
+// that week introduced, and how much is in the review pool.
 function renderStageRow(containerId, onSelect) {
   const wrap = document.getElementById(containerId);
   wrap.innerHTML = '';
+
+  // Grouped by term, because the week numbers restart: Autumn 1 runs
+  // 1,2,3,4,6 and then Autumn 2 begins at 1 again. Ungrouped, that reads as
+  // a numbering bug rather than as a new term.
+  const row = document.createElement('div');
+  row.className = 'stage-btns';
+  let lastTerm = null;
   STAGES.forEach(s => {
+    if (s.term !== lastTerm) {
+      const tag = document.createElement('span');
+      tag.className = 'term-tag';
+      // "Autumn 1" -> "A1": the full name is in the caption below and in
+      // every button's tooltip, so this only has to disambiguate.
+      tag.textContent = s.term.split(' ').map(part =>
+        /^\d+$/.test(part) ? part : part[0]).join('');
+      tag.title = s.term;
+      row.appendChild(tag);
+      lastTerm = s.term;
+    }
     const unlocked = s.id <= stageProgress.current;
     const btn = document.createElement('button');
     btn.className = 'stage-btn'
       + (s.id === selectedStage ? ' active' : '')
       + (!unlocked ? ' locked' : '');
-    btn.textContent = unlocked ? s.id : '🔒';
+    // The week number shows even when locked: "which week is he up to, and
+    // what's next" should be readable at a glance, and a row of padlocks
+    // hides exactly that. Locked buttons are pale and disabled instead.
+    btn.textContent = s.week;
     btn.disabled = !unlocked;
+    // Named for anyone hovering or using a screen reader, locked or not.
+    btn.title = unlocked ? s.label : `${s.label} — locked`;
+    btn.setAttribute('aria-label', btn.title);
     btn.addEventListener('click', () => onSelect(s.id));
-    wrap.appendChild(btn);
+    row.appendChild(btn);
   });
+  wrap.appendChild(row);
+
+  const stage = STAGES[selectedStage - 1];
+  const week = TEACHING_WEEKS[selectedStage - 1];
+  const caption = document.createElement('div');
+  caption.className = 'stage-caption';
+  caption.innerHTML =
+    `<span class="stage-week">${stage.label}</span>`
+    + `<span class="stage-new">new: ${week.graphemes.join(' ')}`
+    + `<span class="stage-count"> · practising ${stage.letters.length} `
+    + `sound${stage.letters.length === 1 ? '' : 's'}</span></span>`;
+  wrap.appendChild(caption);
+}
+
+// The home screen says which week Felix is up to, so it's answerable at a
+// glance without opening a game.
+function renderCurrentWeek() {
+  const el = document.getElementById('week-now');
+  if (!el) return;
+  const stage = STAGES[stageProgress.current - 1];
+  el.textContent = `Up to: ${stage.label}`;
 }
 
 const DINOSAURS = [
@@ -215,10 +270,10 @@ document.querySelectorAll('.game-tile').forEach(btn => {
 });
 
 document.querySelectorAll('[data-back]').forEach(btn => {
-  btn.addEventListener('click', () => showScreen('screen-home'));
+  btn.addEventListener('click', () => { renderCurrentWeek(); showScreen('screen-home'); });
 });
 
-document.getElementById('home-btn').addEventListener('click', () => showScreen('screen-home'));
+document.getElementById('home-btn').addEventListener('click', () => { renderCurrentWeek(); showScreen('screen-home'); });
 
 let lastCompletedGame = null;
 document.getElementById('play-again-btn').addEventListener('click', () => {
@@ -911,3 +966,6 @@ function finishSession(game) {
   }
   showScreen('screen-complete');
 }
+
+// Fill in the home screen's week line on first load.
+renderCurrentWeek();

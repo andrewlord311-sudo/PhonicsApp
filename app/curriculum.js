@@ -154,42 +154,47 @@ const CURRICULUM = {
     bell: '🔔', hill: '⛰️', bed: '🛏️', leg: '🦵',
   },
 
-  // School, week by week. `ready: false` means the audio for it doesn't
+  // School, week by week. `term` + `week` are the school's OWN numbering,
+  // not a position in this list: Autumn 1 jumps from week 4 to week 6
+  // because week 5 is an assess-and-review week. The stage buttons show
+  // `week`, so what's on screen matches what he did in class.
+  //
+  // `ready: false` means the audio for it doesn't
   // exist yet, so the app leaves the week out of the playable stages —
   // generate the clips, flip the flag, and it appears. `review: true` is an
   // ELS assess-and-review week: real in school, but it teaches no new
   // grapheme, so it isn't a stage.
   weeks: [
-    { id: 'A1.1', label: 'Autumn 1 · week 1', ready: true,
+    { id: 'A1.1', term: 'Autumn 1', week: 1, ready: true,
       graphemes: ['s', 'a', 't', 'p'],
       words: ['at', 'sat', 'pat', 'tap', 'sap'],
       hrs: ['i', 'the', 'no'] },
 
-    { id: 'A1.2', label: 'Autumn 1 · week 2', ready: true,
+    { id: 'A1.2', term: 'Autumn 1', week: 2, ready: true,
       graphemes: ['i', 'n', 'm', 'd'],
       words: ['it', 'in', 'nip', 'tin', 'tip', 'pin', 'pit', 'sit', 'sip',
               'man', 'map', 'mad', 'dad', 'did', 'mat', 'nap', 'tan', 'sad',
               'dip'],
       hrs: ['put', 'of', 'is'] },
 
-    { id: 'A1.3', label: 'Autumn 1 · week 3', ready: true,
+    { id: 'A1.3', term: 'Autumn 1', week: 3, ready: true,
       graphemes: ['g', 'o', 'c', 'k', 'ck'],
       words: ['cat', 'can', 'cap', 'cot', 'cod', 'dog', 'got', 'gap', 'kit',
               'kid', 'sock', 'kick', 'pick', 'sick', 'top', 'pot', 'not',
               'on', 'dot'],
       hrs: ['to', 'go', 'into'] },
 
-    { id: 'A1.4', label: 'Autumn 1 · week 4', ready: true,
+    { id: 'A1.4', term: 'Autumn 1', week: 4, ready: true,
       graphemes: ['e', 'u', 'r', 'ss'],
       words: ['red', 'run', 'rug', 'rat', 'rip', 'get', 'pet', 'net', 'ten',
               'up', 'us', 'cut', 'cup', 'mud', 'mug', 'sun', 'kiss', 'miss',
               'mess', 'less'],
       hrs: ['pull'] },
 
-    { id: 'A1.5', label: 'Autumn 1 · week 5', ready: true, review: true,
+    { id: 'A1.5', term: 'Autumn 1', week: 5, ready: true, review: true,
       graphemes: [], words: [], hrs: [] },
 
-    { id: 'A1.6', label: 'Autumn 1 · week 6', ready: true,
+    { id: 'A1.6', term: 'Autumn 1', week: 6, ready: true,
       graphemes: ['h', 'b', 'f', 'ff', 'l', 'll'],
       words: ['hat', 'hit', 'hot', 'hug', 'bat', 'bed', 'big', 'bus', 'fit',
               'fun', 'fan', 'fat', 'leg', 'lot', 'lip', 'bell', 'fell',
@@ -204,21 +209,21 @@ const CURRICULUM = {
     // first week has audio. The rest need clips before they can be played —
     // that's what `ready: false` is saying, and it's the honest state rather
     // than a stage that would fail silently on a missing file.
-    { id: 'A2.1', label: 'Autumn 2 · week 1', ready: true,
+    { id: 'A2.1', term: 'Autumn 2', week: 1, ready: true,
       graphemes: ['j', 'v', 'w', 'x'],
       words: [], hrs: ['he', 'she', 'buses'] },
 
-    { id: 'A2.2', label: 'Autumn 2 · week 2', ready: false,
+    { id: 'A2.2', term: 'Autumn 2', week: 2, ready: false,
       graphemes: ['y', 'z', 'zz', 'qu', 'ch'],
       words: [], hrs: ['we', 'me', 'be'],
       needs: ['ch'] },
 
-    { id: 'A2.3', label: 'Autumn 2 · week 3', ready: false,
+    { id: 'A2.3', term: 'Autumn 2', week: 3, ready: false,
       graphemes: ['sh', 'th', 'ng', 'nk'],
       words: [], hrs: ['push'],
       needs: ['sh', 'th (voiced)', 'th (unvoiced)', 'ng', 'nk'] },
 
-    { id: 'A2.4', label: 'Autumn 2 · week 4', ready: false,
+    { id: 'A2.4', term: 'Autumn 2', week: 4, ready: false,
       graphemes: ['ai', 'ee', 'igh', 'oa'],
       words: [], hrs: ['was', 'her'],
       needs: ['ai', 'ee', 'igh', 'oa'] },
