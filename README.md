@@ -9,7 +9,7 @@ no dependencies — open `app/index.html` and it runs.
 
 | Game | What it does |
 |---|---|
-| **Football Sounds** | Hear a letter sound, tap the matching letter, score a goal. Five stages, each unlocked by the one before. |
+| **Football Sounds** | Hear a letter sound, tap the matching letter, score a goal. Stages unlock one by one. |
 | **Dinosaur Puzzle** | Same sound-to-letter matching, revealing a dinosaur picture piece by piece. |
 | **Sound Buttons** | A word on screen split into its graphemes, each tappable to hear its sound, then "Read the word" to hear it blended. |
 | **Robot Talk** | A robot says `c… a… t` in separate sounds; tap the picture of the word. Nothing is written down. |
@@ -45,9 +45,10 @@ repeat an emoji (two words sharing a picture makes a round with two identical
 answers — there's a test), and stick to long-established emoji, since newer
 ones like 🪆 and 🪭 render as an empty box on older tablets.
 
-Both have a **Letter name** button alongside **Hear it again**, so the sound
-(`sss`) and the name (`ess`) stay separable — that distinction is the whole
-point of synthetic phonics.
+The two **matching** games (Football, Puzzle) have a **Letter name** button
+alongside **Hear it again**, so the sound (`sss`) and the name (`ess`) stay
+separable — that distinction is the whole point of synthetic phonics. They
+are also the only two games that unlock stages, for the reasons below.
 
 ## Audio
 
