@@ -1,9 +1,5 @@
 # PhonicsApp
 
-Context carried over from Claude's memory on the Mac:
-
-@CLAUDE-context.md
-
 <!-- key-docs:start -->
 ## Key docs (read these before re-deriving anything)
 **Topic:** Phonics synthetic-phonics app.
